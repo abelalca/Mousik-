@@ -6,7 +6,8 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { gzipSync } from 'node:zlib'
 
-const BUDGET_KB = { initial: 160, total: 450 }
+// total raised from 450 to 600 KB for the band characters (inline SVG art that loads after the first screen)
+const BUDGET_KB = { initial: 160, total: 600 }
 const dir = process.argv[2] ?? 'dist'
 const html = readFileSync(`${dir}/index.html`, 'utf8')
 const gz = (f) => gzipSync(readFileSync(`${dir}/${f}`)).length / 1024

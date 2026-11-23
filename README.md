@@ -19,25 +19,12 @@ App web (y móvil, instalable como PWA) estilo Duolingo para aprender **teoría 
 
 ```bash
 npm install
-cp .env.example .env    # opcional: credenciales de Supabase
-npm run dev             # http://localhost:5173
+npm run dev             # http://localhost:5173 (modo invitado, sin backend)
 ```
 
-Sin variables de Supabase, la app funciona en **modo local** (el progreso se guarda en el navegador).
+Con backend local (requiere Docker): `npx supabase start`, copia `.env.example` a `.env.local` con la clave que imprime, y `npm run dev`.
 
-### Activar cuentas de usuario (Supabase)
-
-1. Crea un proyecto gratis en [supabase.com](https://supabase.com).
-2. En *SQL Editor*, ejecuta `supabase/migrations/0001_profiles.sql`.
-3. En *Settings → API*, copia la `Project URL` y la `anon public key` en `.env`:
-   ```
-   VITE_SUPABASE_URL=https://xxxx.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJ...
-   ```
-4. (Opcional) Para entrar con Google: *Authentication → Providers → Google*.
-5. En *Authentication → URL Configuration*, añade la URL de tu sitio (p. ej. `http://localhost:5173` y la de producción).
-
-El progreso se sincroniza en la tabla `profiles` (con Row Level Security: cada usuario solo ve su fila).
+Ambientes (DEV/QA/PROD), ciclo de desarrollo, CI/CD, seguridad y configuración de cuentas: **[docs/DEVOPS.md](docs/DEVOPS.md)**.
 
 ## Scripts
 
@@ -46,7 +33,10 @@ El progreso se sincroniza en la tabla `profiles` (con Row Level Security: cada u
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Compilación de producción (+ service worker PWA) |
 | `npm run preview` | Sirve la compilación |
-| `npm run validate` | Verifica que cada ejercicio tenga exactamente una respuesta correcta |
+| `npm run validate` | Verifica el contenido: una respuesta correcta por ejercicio, registros de instrumentos y catálogo del servidor |
+| `npm test` | Tests unitarios (Vitest) |
+| `npm run size` | Presupuesto de peso del bundle (tras `npm run build`) |
+| `npx supabase test db` | Tests de seguridad de la base de datos (RLS, funciones) |
 
 ## Estructura
 
@@ -62,7 +52,9 @@ src/pages/                Bienvenida, Login, Onboarding, Mapa (Home), Lección, 
 src/lib/                  Audio multi-instrumento (Tone.js), catálogo de instrumentos, teoría, i18n, auth, sync
 public/samples/           Muestras de instrumentos + manifest.json + CREDITS.md
 src/store/useStore.ts     Estado (ajustes, XP, racha, corazones, progreso)
-supabase/migrations/      Esquema de la base de datos
+supabase/migrations/      Esquema de la base de datos (RLS, funciones de progreso validadas)
+supabase/tests/           Tests de seguridad pgTAP
+.github/workflows/        CI (PR), Deploy (DEV/QA/PROD), backup nocturno
 ```
 
 ### Cómo escribir lecciones

@@ -1,4 +1,4 @@
-import * as Tone from 'tone'
+import type * as ToneNS from 'tone'
 import manifest from '../../public/samples/manifest.json'
 import { INSTRUMENTS, fitGroup, fitNote, type InstrumentId } from './instruments'
 import { midi } from './music'
@@ -23,9 +23,13 @@ interface Voice {
 }
 
 const voices = new Map<InstrumentId, Voice>()
-let master: Tone.Reverb | null = null
+let master: ToneNS.Reverb | null = null
+// Tone.js (~65 KB gzip) is loaded on the first sound, not before the first screen.
+let Tone: typeof ToneNS
+let toneLoading: Promise<typeof ToneNS> | null = null
 
 async function ctx() {
+  if (!Tone) Tone = await (toneLoading ??= import('tone'))
   if (Tone.getContext().state !== 'running') await Tone.start()
   if (!master) master = new Tone.Reverb({ decay: 2.4, wet: 0.2 }).toDestination()
   return master
@@ -34,14 +38,14 @@ async function ctx() {
 const BASE = `${import.meta.env.BASE_URL}samples/`
 const sampleUrls = manifest as Record<string, Record<string, string>>
 
-function sampler(folder: string, out: Tone.ToneAudioNode, opts: Partial<Tone.SamplerOptions> = {}) {
+function sampler(folder: string, out: ToneNS.ToneAudioNode, opts: Partial<ToneNS.SamplerOptions> = {}) {
   let resolve!: () => void
   const loaded = new Promise<void>((r) => (resolve = r))
   const s = new Tone.Sampler({ urls: sampleUrls[folder], baseUrl: `${BASE}${folder}/`, release: 1, onload: () => resolve(), ...opts }).connect(out)
   return { s, loaded }
 }
 
-function build(id: InstrumentId, out: Tone.ToneAudioNode): Voice {
+function build(id: InstrumentId, out: ToneNS.ToneAudioNode): Voice {
   const ready = Promise.resolve()
   switch (id) {
     case 'guitar-distortion': {

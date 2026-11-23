@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { supabase, cloudEnabled } from './supabase'
+import type { AuthProvider } from './config'
+import { useStore } from '@/store/useStore'
 
 export interface AppUser {
   id: string
@@ -13,14 +15,15 @@ interface AuthState {
   init: () => void
   signUp: (email: string, password: string) => Promise<{ error?: string; needsConfirm?: boolean }>
   signIn: (email: string, password: string) => Promise<{ error?: string }>
-  signInWithGoogle: () => Promise<{ error?: string }>
+  signInWithProvider: (provider: AuthProvider) => Promise<{ error?: string }>
+  deleteAccount: () => Promise<{ error?: string }>
   continueLocally: () => void
   signOut: () => Promise<void>
 }
 
 const LOCAL_KEY = 'mousik-local-user'
 
-export const useAuth = create<AuthState>((set) => ({
+export const useAuth = create<AuthState>((set, get) => ({
   user: null,
   ready: false,
   init: () => {
@@ -51,20 +54,38 @@ export const useAuth = create<AuthState>((set) => ({
     const { error } = await supabase!.auth.signInWithPassword({ email, password })
     return error ? { error: error.message } : {}
   },
-  signInWithGoogle: async () => {
+  signInWithProvider: async (provider) => {
     const { error } = await supabase!.auth.signInWithOAuth({
-      provider: 'google',
+      provider,
       options: { redirectTo: window.location.origin },
     })
     return error ? { error: error.message } : {}
+  },
+  deleteAccount: async () => {
+    if (cloudEnabled && supabase) {
+      const { error } = await supabase.rpc('delete_my_account')
+      if (error) return { error: error.message }
+      await supabase.auth.signOut({ scope: 'local' })
+    }
+    localStorage.removeItem(LOCAL_KEY)
+    useStore.getState().reset()
+    set({ user: null })
+    return {}
   },
   continueLocally: () => {
     localStorage.setItem(LOCAL_KEY, '1')
     set({ user: { id: 'local', email: null, local: true } })
   },
   signOut: async () => {
+    const wasCloud = !!get().user && !get().user!.local
     localStorage.removeItem(LOCAL_KEY)
     if (supabase) await supabase.auth.signOut()
+    // Don't leave a previous user's progress on a shared device (cloud users get it back on sign-in).
+    if (wasCloud) {
+      const { locale } = useStore.getState().settings
+      useStore.getState().reset()
+      useStore.getState().setSettings({ locale })
+    }
     set({ user: null })
   },
 }))

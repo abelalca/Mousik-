@@ -8,11 +8,23 @@ import { buildQuestion } from '../src/exercises/build'
 import { midi } from '../src/lib/music'
 import { INSTRUMENTS } from '../src/lib/instruments'
 import manifest from '../public/samples/manifest.json'
+import { readFileSync, readdirSync } from 'node:fs'
 
 let problems = 0
 // every sample-based instrument must have samples
 for (const inst of Object.values(INSTRUMENTS))
   if (inst.samples && !(manifest as Record<string, object>)[inst.samples]) (problems++, console.log(`✗ no samples for ${inst.id}`))
+
+// every lesson must exist in the server catalog (public.lessons) with enough exercises
+const catalog = new Map<string, number>()
+for (const f of readdirSync('supabase/migrations').sort())
+  for (const m of readFileSync(`supabase/migrations/${f}`, 'utf8').matchAll(/\('(u\d+-[a-z0-9-]+)',\s*\d+,\s*(\d+)\)/g))
+    catalog.set(m[1], Number(m[2]))
+for (const l of allLessons) {
+  const max = Math.max(l.exercises.length, ...Object.values(l.variants ?? {}).map((v) => v.exercises.length))
+  if (!catalog.has(l.id)) (problems++, console.log(`✗ ${l.id} missing from the server lesson catalog (run scripts/lesson-catalog.ts and add a migration)`))
+  else if (catalog.get(l.id)! < max) (problems++, console.log(`✗ ${l.id}: catalog allows ${catalog.get(l.id)} exercises but content has ${max}`))
+}
 
 let checked = 0
 for (const genre of ['classical', 'pop', 'rock'] as const)

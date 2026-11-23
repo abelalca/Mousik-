@@ -22,6 +22,15 @@ export interface Settings {
   displayName: string
 }
 
+/** A finished lesson waiting to be confirmed by the server (e.g. while offline). */
+export interface PendingCompletion {
+  attemptId: string
+  lessonId: string
+  correct: number
+  total: number
+  timezone: string
+}
+
 export interface Progress {
   xp: number
   completed: Record<string, LessonRecord>
@@ -38,12 +47,17 @@ interface State {
   settings: Settings
   progress: Progress
   updatedAt: number
+  pendingCompletions: PendingCompletion[]
   setSettings: (s: Partial<Settings>) => void
   finishOnboarding: (s: Partial<Settings>) => void
   loseHeart: () => void
   refillHearts: () => void
   completeLesson: (lessonId: string, xp: number, accuracy: number) => void
-  hydrateRemote: (data: { onboarded: boolean; settings: Settings; progress: Progress; updatedAt: number }) => void
+  hydrateRemote: (data: { onboarded?: boolean; settings?: Settings; progress?: Partial<Progress> }) => void
+  /** Server is the authority for XP and streak once a lesson is confirmed. */
+  applyServerProgress: (p: { total_xp: number; streak: number; last_active_date: string }) => void
+  addPending: (p: PendingCompletion) => void
+  removePending: (attemptId: string) => void
   reset: () => void
 }
 
@@ -74,6 +88,7 @@ const initial = () => ({
     todayDate: null,
   } as Progress,
   updatedAt: 0,
+  pendingCompletions: [] as PendingCompletion[],
 })
 
 export const useStore = create<State>()(
@@ -132,7 +147,16 @@ export const useStore = create<State>()(
           updatedAt: Date.now(),
         })
       },
-      hydrateRemote: (data) => set({ ...data }),
+      hydrateRemote: (data) =>
+        set((s) => ({
+          onboarded: data.onboarded ?? s.onboarded,
+          settings: data.settings ?? s.settings,
+          progress: { ...s.progress, ...data.progress },
+        })),
+      applyServerProgress: ({ total_xp, streak, last_active_date }) =>
+        set((s) => ({ progress: { ...s.progress, xp: total_xp, streak, lastActiveDate: last_active_date } })),
+      addPending: (p) => set((s) => ({ pendingCompletions: [...s.pendingCompletions.filter((x) => x.attemptId !== p.attemptId), p] })),
+      removePending: (id) => set((s) => ({ pendingCompletions: s.pendingCompletions.filter((x) => x.attemptId !== id) })),
       reset: () => set(initial()),
     }),
     {

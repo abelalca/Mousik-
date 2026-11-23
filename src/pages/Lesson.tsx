@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { findLesson, isUnlocked } from '@/content/course'
@@ -7,6 +7,7 @@ import { buildQuestion, type Clip, type Question } from '@/exercises/build'
 import { useT } from '@/lib/i18n'
 import { useStore, liveStreak } from '@/store/useStore'
 import { playClips, playFeedback, preload } from '@/lib/audio'
+import { startAttempt, submitCompletion } from '@/lib/progressApi'
 import { InstrumentChip } from '@/components/InstrumentCards'
 import { allLessons } from '@/content/course'
 import { midi } from '@/lib/music'
@@ -48,6 +49,13 @@ export default function LessonPage() {
   const [marks, setMarks] = useState<Record<number, KeyMark>>({})
   const [confirmQuit, setConfirmQuit] = useState(false)
   const [result, setResult] = useState<{ xp: number; accuracy: number } | null>(null)
+
+  // Ask the server for an attempt id (it validates unlock order); results are sent with it.
+  const attemptId = useRef<Promise<string | null> | null>(null)
+  useEffect(() => {
+    if (lesson && !attemptId.current) attemptId.current = startAttempt(lesson.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Download every instrument this lesson will use while the learner reads the theory.
   useEffect(() => {
@@ -122,6 +130,10 @@ export default function LessonPage() {
     const accuracy = Math.round(((total - firstTryWrong.size) / total) * 100)
     const xp = 10 + (firstTryWrong.size === 0 ? 5 : 0)
     completeLesson(lesson!.id, xp, accuracy)
+    // Official XP/streak come back from the server (queued if offline).
+    attemptId.current?.then((id) => {
+      if (id) submitCompletion(id, lesson!.id, total - firstTryWrong.size, total)
+    })
     setResult({ xp, accuracy })
     setPhase('done')
   }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 import { cloudEnabled } from '@/lib/supabase'
+import { getConfig } from '@/lib/config'
 import { useT } from '@/lib/i18n'
 import { Mascot } from '@/components/Mascot'
 import { LangToggle } from './Welcome'
@@ -10,7 +11,10 @@ export default function Auth() {
   const { t } = useT()
   const [params, setParams] = useSearchParams()
   const mode = params.get('mode') === 'signin' ? 'signin' : 'signup'
-  const { signIn, signUp, signInWithGoogle, continueLocally } = useAuth()
+  const { signIn, signUp, signInWithProvider, continueLocally } = useAuth()
+  const providers = getConfig().authProviders
+  // Same policy as the server (supabase/config.toml): 8+ chars, upper, lower and a digit.
+  const strongPassword = (p: string) => p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -19,8 +23,12 @@ export default function Auth() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    setBusy(true)
     setError(null)
+    if (mode === 'signup' && !strongPassword(password)) {
+      setError(t('passwordRule'))
+      return
+    }
+    setBusy(true)
     if (mode === 'signin') {
       const r = await signIn(email, password)
       if (r.error) setError(r.error)
@@ -53,20 +61,32 @@ export default function Auth() {
           </div>
         ) : (
           <div className="w-full space-y-4">
-            <button className="btn-ghost w-full" onClick={() => signInWithGoogle()}>
-              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
+            {providers.includes('apple') && (
+              <button className="btn-ghost w-full" onClick={() => signInWithProvider('apple')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8-.1 0-2.5-1-2.5-3.9ZM14 5.4c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4Z" />
+                </svg>
+                {t('apple')}
+              </button>
+            )}
+            {providers.includes('google') && (
+              <button className="btn-ghost w-full" onClick={() => signInWithProvider('google')}>
+                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
                 <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
                 <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
                 <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
                 <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
               </svg>
-              {t('google')}
-            </button>
+                {t('google')}
+              </button>
+            )}
+            {providers.length > 0 && (
             <div className="flex items-center gap-3 text-xs text-muted uppercase">
               <div className="h-px flex-1 bg-line" />
               {t('orContinue')}
               <div className="h-px flex-1 bg-line" />
             </div>
+            )}
             <form onSubmit={submit} className="space-y-3">
               <input
                 type="email"
@@ -80,7 +100,7 @@ export default function Auth() {
               <input
                 type="password"
                 required
-                minLength={6}
+                minLength={mode === 'signup' ? 8 : 1}
                 placeholder={t('password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

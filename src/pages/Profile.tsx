@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAuth } from '@/lib/auth'
 import { useT } from '@/lib/i18n'
 import { liveStreak, useStore } from '@/store/useStore'
@@ -27,7 +28,9 @@ function Segmented<T extends string>({ value, options, onChange }: { value: T; o
 export default function Profile() {
   const { t } = useT()
   const { settings, progress, setSettings } = useStore()
-  const { user, signOut } = useAuth()
+  const { user, signOut, deleteAccount } = useAuth()
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const lessons = Object.keys(progress.completed).length
 
   return (
@@ -92,9 +95,37 @@ export default function Profile() {
         </ul>
       </details>
 
-      <button className="btn-ghost w-full !text-danger" onClick={signOut}>
+      <button className="btn-ghost w-full" onClick={signOut}>
         {t('signOut')}
       </button>
+
+      <section className="card p-5 border-danger/30">
+        {!confirmDelete ? (
+          <button className="text-sm font-semibold text-danger" onClick={() => setConfirmDelete(true)}>
+            {t('deleteAccount')}
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <p className="font-semibold">{t('deleteAccount')}</p>
+            <p className="text-sm text-muted">{user?.local ? t('deleteAccountLocal') : t('deleteAccountBody')}</p>
+            {deleteError && <p className="text-sm text-danger">{deleteError}</p>}
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="btn-primary !bg-danger !text-white"
+                onClick={async () => {
+                  const r = await deleteAccount()
+                  if (r.error) setDeleteError(r.error)
+                }}
+              >
+                {t('deleteConfirm')}
+              </button>
+              <button className="btn-ghost" onClick={() => setConfirmDelete(false)}>
+                {t('cancel')}
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "validate": "tsx --tsconfig tsconfig.json scripts/validate-content.ts"
+    "validate": "tsx --tsconfig tsconfig.json scripts/validate-content.ts",
+    "build:preview": "vite build --mode preview --outDir dist-preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.46.1",

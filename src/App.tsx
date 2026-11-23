@@ -1,5 +1,8 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from 'react-router-dom'
+
+// In-memory routing when hosted as a static preview inside a sandboxed frame.
+const Router = import.meta.env.VITE_ROUTER === 'memory' ? MemoryRouter : BrowserRouter
 import { useAuth } from '@/lib/auth'
 import { useCloudSync } from '@/lib/sync'
 import { useStore } from '@/store/useStore'
@@ -36,7 +39,7 @@ export default function App() {
     )
 
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         {!user ? (
           <>
@@ -57,6 +60,6 @@ export default function App() {
           </>
         )}
       </Routes>
-    </BrowserRouter>
+    </Router>
   )
 }

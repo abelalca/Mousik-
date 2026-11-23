@@ -3,7 +3,9 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // 'preview' mode: static build with relative paths, hash routing and no service worker.
+  base: mode === 'preview' ? './' : '/',
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
   build: {
     rollupOptions: {
@@ -15,6 +17,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    mode !== 'preview' &&
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
@@ -41,4 +44,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+}))

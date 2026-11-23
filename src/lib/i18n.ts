@@ -145,8 +145,9 @@ const ui = {
   regLow: { en: 'Low', es: 'Grave' },
   regMid: { en: 'Middle', es: 'Medio' },
   regHigh: { en: 'High', es: 'Agudo' },
-  unitSongTitle: { en: 'Unit complete! Mo plays your song', es: '¡Unidad completada! Mo toca tu canción' },
   songNextUnit: { en: 'Next, in Unit 2, you will give your song a rhythm.', es: 'En la Unidad 2 le darás ritmo a tu canción.' },
+  unitConcert: { en: 'To the concert!', es: '¡Al concierto!' },
+  nextStop: { en: 'Next stop', es: 'Próxima parada' },
   // band
   band: { en: 'Band', es: 'Banda' },
   myBand: { en: "Mo's band", es: 'La banda de Mo' },

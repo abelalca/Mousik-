@@ -19,6 +19,8 @@ const SongPage = lazy(() => import('@/pages/Song'))
 const BandPage = lazy(() => import('@/pages/Band'))
 // Dev-only character sheet (removed from production builds).
 const BandPreview = import.meta.env.DEV ? lazy(() => import('@/pages/BandPreview')) : null
+// Dev-only: the end-of-unit concert, to review it without finishing a unit.
+const ConcertPreview = import.meta.env.DEV ? lazy(() => import('@/components/Concert').then((m) => ({ default: () => <m.Concert unitIndex={0} onContinue={() => history.back()} /> }))) : null
 
 export default function App() {
   const { user, ready, init } = useAuth()
@@ -47,6 +49,7 @@ export default function App() {
     <Router>
       <Routes>
         {BandPreview && <Route path="/dev/band" element={<Suspense fallback={null}><BandPreview /></Suspense>} />}
+        {ConcertPreview && <Route path="/dev/concert" element={<Suspense fallback={null}><ConcertPreview /></Suspense>} />}
         {!user ? (
           <>
             <Route path="/" element={<Welcome />} />

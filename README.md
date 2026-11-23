@@ -79,6 +79,7 @@ Las muestras se regeneran con `python3 scripts/fetch-samples.py` (requiere ffmpe
 - [x] Motor multi-instrumento por género
 - [x] "Tu canción": cada lección termina con un paso creativo (sin respuestas incorrectas) que añade una pieza a la canción del alumno; página *Mi canción*
 - [x] La banda de Mo: escenario, músicos que presentan cada unidad y se unen al terminarla, capas de la canción por músico
+- [x] Mapa en pentagrama (cada unidad un compás, cada lección una nota) y gira de 8 salas comunes a los 3 géneros, con concierto al terminar cada unidad
 - [ ] Unidad 2: ritmo y compás (ejercicios de tap rítmico)
 - [ ] Unidades 3–7: intervalos, escalas, acordes, armonía, melodía
 - [ ] Unidad 8: forma y composición + editor de composición y proyecto final

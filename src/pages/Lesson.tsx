@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { findLesson, isUnlocked, unitOf } from '@/content/course'
+import { course, findLesson, isUnlocked, unitOf } from '@/content/course'
+import { Concert } from '@/components/Concert'
 import type { Exercise } from '@/content/types'
 import { buildQuestion, type Clip, type Question } from '@/exercises/build'
 import { useT } from '@/lib/i18n'
@@ -20,7 +21,7 @@ import { CreateStepView } from '@/components/CreateStep'
 import { JoinBandOverlay } from '@/components/JoinBand'
 import { Character, type CharacterId } from '@/components/characters'
 import { joinsAfter, unitPresenter } from '@/content/band'
-import { PlaySongButton, useSongPlayer } from '@/components/SongPlayer'
+import { PlaySongButton } from '@/components/SongPlayer'
 
 type Status = 'idle' | 'correct' | 'wrong'
 interface Item {
@@ -39,12 +40,11 @@ export default function LessonPage() {
   const loseHeart = useStore((s) => s.loseHeart)
   const completeLesson = useStore((s) => s.completeLesson)
   const setSongSlot = useStore((s) => s.setSongSlot)
-  const { play: playSong, playing: songPlaying } = useSongPlayer()
   // Was this lesson's unit already finished before? (to celebrate only the first time)
   const [unitWasDone] = useState(() => !!lesson && !!unitOf(lesson.id)?.lessons.every((l) => progress.completed[l.id]))
   const [songSaved, setSongSaved] = useState(false)
 
-  const [phase, setPhase] = useState<'theory' | 'practice' | 'create' | 'done'>('theory')
+  const [phase, setPhase] = useState<'theory' | 'practice' | 'create' | 'done' | 'concert'>('theory')
   const [card, setCard] = useState(0)
   // Genre variants replace the shared content (fixed for the whole lesson, even if settings change).
   const [content] = useState(() => (lesson ? lesson.variants?.[genre] ?? { cards: lesson.cards, exercises: lesson.exercises } : { cards: [], exercises: [] }))
@@ -90,15 +90,10 @@ export default function LessonPage() {
 
   const unit = lesson ? unitOf(lesson.id) : undefined
   const unitJustDone =
-    phase === 'done' && !unitWasDone && !!unit?.lessons.length && unit.lessons.every((l) => useStore.getState().progress.completed[l.id])
+    (phase === 'done' || phase === 'concert') && !unitWasDone && !!unit?.lessons.length && unit.lessons.every((l) => useStore.getState().progress.completed[l.id])
   // The unit's musician presents its theory and feedback.
   const presenter: CharacterId = unit ? unitPresenter(unit.id) : 'mo'
   const [joinClosed, setJoinClosed] = useState(false)
-  // Finishing a unit: Mo plays the learner's song.
-  useEffect(() => {
-    if (unitJustDone) playSong()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unitJustDone])
 
   if (!lesson) return <Navigate to="/" replace />
   if (!isUnlocked(lesson.id, progress.completed)) return <Navigate to="/" replace />
@@ -199,40 +194,36 @@ export default function LessonPage() {
           <h1 className="text-4xl font-bold metal-text">{perfect ? t('perfect') : t('lessonComplete')}</h1>
           <p className="text-muted mt-2">{tl(lesson.title)}</p>
         </div>
-        {unitJustDone ? (
-          <div className="card w-full p-4 border-accent2/40 bg-accent2/5">
-            <p className="font-display text-lg font-bold flex items-center justify-center gap-2">
-              <Note size={18} className="text-accent2" /> {t('unitSongTitle')}
+        {songSaved && (
+          <div className="w-full">
+            <p className="chip bg-accent2/15 text-accent2 mx-auto">
+              <Note size={14} /> {t('addedToSong')}
             </p>
-            <button className="btn-ghost w-full mt-2" onClick={() => playSong()} disabled={songPlaying}>
-              {songPlaying ? t('playing') : t('listenSong')}
-            </button>
-            <p className="text-sm text-muted mt-1">{t('songNextUnit')}</p>
+            {/* finishing a unit, the song is played at the concert instead */}
+            {!unitJustDone && <PlaySongButton className="w-full mt-2" />}
           </div>
-        ) : (
-          songSaved && (
-            <div className="w-full">
-              <p className="chip bg-accent2/15 text-accent2 mx-auto">
-                <Note size={14} /> {t('addedToSong')}
-              </p>
-              <PlaySongButton className="w-full mt-2" />
-            </div>
-          )
         )}
         <div className="grid grid-cols-3 gap-3 w-full">
           <ResultTile icon={<Bolt size={22} />} label={t('xpEarned')} value={`+${result.xp}`} tone="text-accent2" />
           <ResultTile icon={<Star size={22} />} label={t('accuracy')} value={`${result.accuracy}%`} tone="text-success" />
           <ResultTile icon={<Flame size={22} />} label={t('streak')} value={String(liveStreak(useStore.getState().progress))} tone="text-[#f59e0b]" />
         </div>
-        <button className="btn-primary w-full mt-4" onClick={() => nav('/')}>
-          {t('continue')}
+        <button className="btn-primary w-full mt-4" onClick={() => (unitJustDone ? setPhase('concert') : nav('/'))}>
+          {unitJustDone ? `🎤 ${t('unitConcert')}` : t('continue')}
         </button>
-        <AnimatePresence>
-          {unitJustDone && !joinClosed && unit && joinsAfter(unit.id).length > 0 && (
-            <JoinBandOverlay members={joinsAfter(unit.id)} onClose={() => setJoinClosed(true)} />
-          )}
-        </AnimatePresence>
       </div>
+    )
+  }
+
+  // ---------- CONCERT (unit finished) ----------
+  if (phase === 'concert' && unit) {
+    return (
+      <>
+        <Concert unitIndex={course.indexOf(unit)} onContinue={() => nav('/')} />
+        <AnimatePresence>
+          {!joinClosed && joinsAfter(unit.id).length > 0 && <JoinBandOverlay members={joinsAfter(unit.id)} onClose={() => setJoinClosed(true)} />}
+        </AnimatePresence>
+      </>
     )
   }
 

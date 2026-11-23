@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Genre themes ----------
+   classical: ivory paper, ink navy, burgundy + antique gold
+   pop:       clean white, vivid violet → coral
+   rock:      near-black, brushed metal, signal red            */
+:root,
+[data-genre='classical'] {
+  --bg: 250 247 241;
+  --surface: 255 253 249;
+  --raised: 243 238 228;
+  --ink: 28 31 48;
+  --muted: 112 108 104;
+  --line: 226 218 204;
+  --accent: 122 30 52;
+  --accent-ink: 255 250 242;
+  --accent2: 181 146 76;
+  --success: 46 125 90;
+  --danger: 176 48 48;
+  --shadow: 60 40 20;
+  --radius: 18px;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --hero: linear-gradient(135deg, rgb(122 30 52), rgb(72 18 34));
+  --metal: linear-gradient(180deg, #d9c38f, #b5924c);
+  --bar: linear-gradient(90deg, rgb(122 30 52), rgb(181 146 76));
+  color-scheme: light;
+}
+
+[data-genre='pop'] {
+  --bg: 250 249 255;
+  --surface: 255 255 255;
+  --raised: 241 238 255;
+  --ink: 26 22 51;
+  --muted: 110 104 140;
+  --line: 230 226 246;
+  --accent: 124 58 237;
+  --accent-ink: 255 255 255;
+  --accent2: 255 94 120;
+  --success: 16 170 120;
+  --danger: 236 64 94;
+  --shadow: 90 50 200;
+  --radius: 24px;
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --hero: linear-gradient(135deg, #7c3aed 0%, #c026d3 50%, #ff5e78 100%);
+  --metal: linear-gradient(135deg, #a78bfa, #ff5e78);
+  --bar: linear-gradient(90deg, #7c3aed, #ff5e78);
+  color-scheme: light;
+}
+
+[data-genre='rock'] {
+  --bg: 13 13 15;
+  --surface: 24 24 27;
+  --raised: 36 36 41;
+  --ink: 236 236 240;
+  --muted: 150 150 160;
+  --line: 52 52 60;
+  --accent: 225 29 46;
+  --accent-ink: 255 255 255;
+  --accent2: 200 204 212;
+  --success: 74 222 128;
+  --danger: 248 72 72;
+  --shadow: 0 0 0;
+  --radius: 12px;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --hero: linear-gradient(135deg, #2a2a30 0%, #111114 60%, #3a0a10 100%);
+  --metal: linear-gradient(180deg, #f2f3f5 0%, #9ea3ad 45%, #e4e6ea 55%, #6b7079 100%);
+  --bar: linear-gradient(90deg, #b3121f, #ff4d4d);
+  color-scheme: dark;
+}
+
+html, body, #root { height: 100%; }
+body { overflow-x: hidden; }
+body {
+  @apply bg-bg text-ink font-body antialiased;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .4s ease, color .4s ease;
+}
+h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
+[data-genre='classical'] h1, [data-genre='classical'] h2, [data-genre='classical'] h3 { letter-spacing: 0; }
+
+@layer components {
+  .card { @apply bg-surface border border-line rounded-card shadow-soft; }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-card px-5 py-3.5 font-semibold
+           transition active:translate-y-[1px] disabled:opacity-40 disabled:pointer-events-none select-none;
+  }
+  .btn-primary { @apply btn bg-accent text-accent-ink shadow-lift hover:brightness-110; }
+  .btn-ghost { @apply btn bg-transparent text-ink border border-line hover:bg-raised; }
+  .btn-soft { @apply btn bg-raised text-ink hover:brightness-95; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold; }
+  .hero-bg { background: var(--hero); }
+  .bar-bg { background: var(--bar); }
+  .metal-text { background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .option {
+    @apply w-full text-left card px-4 py-3.5 font-medium transition hover:border-accent/50
+           active:scale-[.99] shadow-none border-2;
+  }
+  .option[data-state='selected'] { @apply border-accent bg-accent/5; }
+  .option[data-state='correct'] { @apply border-success bg-success/10; }
+  .option[data-state='wrong'] { @apply border-danger bg-danger/10; }
+}
+
+.safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 0px); }

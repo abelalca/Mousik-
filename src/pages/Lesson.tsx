@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { findLesson, isUnlocked } from '@/content/course'
+import { findLesson, isUnlocked, unitOf } from '@/content/course'
 import type { Exercise } from '@/content/types'
 import { buildQuestion, type Clip, type Question } from '@/exercises/build'
 import { useT } from '@/lib/i18n'
@@ -15,7 +15,9 @@ import { Mascot, type Mood } from '@/components/Mascot'
 import { RichText, useRich } from '@/components/RichText'
 import { Demo } from '@/components/Demo'
 import { Piano, type KeyMark } from '@/components/Piano'
-import { Bolt, Bulb, Check, Flame, Heart, Speaker, Star, X } from '@/components/Icons'
+import { Bolt, Bulb, Check, Flame, Heart, Note, Speaker, Star, X } from '@/components/Icons'
+import { CreateStepView } from '@/components/CreateStep'
+import { PlaySongButton, useSongPlayer } from '@/components/SongPlayer'
 
 type Status = 'idle' | 'correct' | 'wrong'
 interface Item {
@@ -33,8 +35,13 @@ export default function LessonPage() {
   const progress = useStore((s) => s.progress)
   const loseHeart = useStore((s) => s.loseHeart)
   const completeLesson = useStore((s) => s.completeLesson)
+  const setSongSlot = useStore((s) => s.setSongSlot)
+  const { play: playSong, playing: songPlaying } = useSongPlayer()
+  // Was this lesson's unit already finished before? (to celebrate only the first time)
+  const [unitWasDone] = useState(() => !!lesson && !!unitOf(lesson.id)?.lessons.every((l) => progress.completed[l.id]))
+  const [songSaved, setSongSaved] = useState(false)
 
-  const [phase, setPhase] = useState<'theory' | 'practice' | 'done'>('theory')
+  const [phase, setPhase] = useState<'theory' | 'practice' | 'create' | 'done'>('theory')
   const [card, setCard] = useState(0)
   // Genre variants replace the shared content (fixed for the whole lesson, even if settings change).
   const [content] = useState(() => (lesson ? lesson.variants?.[genre] ?? { cards: lesson.cards, exercises: lesson.exercises } : { cards: [], exercises: [] }))
@@ -78,12 +85,21 @@ export default function LessonPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, pos])
 
+  const unit = lesson ? unitOf(lesson.id) : undefined
+  const unitJustDone =
+    phase === 'done' && !unitWasDone && !!unit?.lessons.length && unit.lessons.every((l) => useStore.getState().progress.completed[l.id])
+  // Finishing a unit: Mo plays the learner's song.
+  useEffect(() => {
+    if (unitJustDone) playSong()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unitJustDone])
+
   if (!lesson) return <Navigate to="/" replace />
   if (!isUnlocked(lesson.id, progress.completed)) return <Navigate to="/" replace />
 
   const total = content.exercises.length
   const cardsN = content.cards.length
-  const pct = phase === 'theory' ? (card / (cardsN + total)) * 100 : phase === 'practice' ? ((cardsN + solved) / (cardsN + total)) * 100 : 100
+  const pct = phase === 'create' ? 100 : phase === 'theory' ? (card / (cardsN + total)) * 100 : phase === 'practice' ? ((cardsN + solved) / (cardsN + total)) * 100 : 100
 
   function playAudio(clips: Clip[]) {
     playClips(clips)
@@ -135,11 +151,37 @@ export default function LessonPage() {
       if (id) submitCompletion(id, lesson!.id, total - firstTryWrong.size, total)
     })
     setResult({ xp, accuracy })
+    // Then the creative step: add a piece to the learner's song (not graded).
+    setPhase(lesson!.create ? 'create' : 'done')
+  }
+
+  function saveSong(value: string) {
+    setSongSlot(lesson!.create!.slot, value)
+    setSongSaved(true)
     setPhase('done')
   }
 
+
   const outOfHearts = progress.hearts <= 0 && status === 'wrong'
   const mood: Mood = status === 'correct' ? 'happy' : status === 'wrong' ? 'sad' : 'think'
+
+  // ---------- CREATE (your song) ----------
+  if (phase === 'create' && lesson.create) {
+    return (
+      <div className="min-h-full flex flex-col max-w-2xl mx-auto">
+        <div className="flex items-center gap-4 px-4 pt-5 pb-3">
+          <div className="flex-1 h-3.5 rounded-full bg-raised overflow-hidden">
+            <div className="h-full w-full rounded-full bar-bg" />
+          </div>
+        </div>
+        <div className="flex-1 px-4 pb-32">
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25 }}>
+            <CreateStepView step={lesson.create} onSave={saveSong} />
+          </motion.div>
+        </div>
+      </div>
+    )
+  }
 
   // ---------- RESULT ----------
   if (phase === 'done' && result) {
@@ -151,6 +193,26 @@ export default function LessonPage() {
           <h1 className="text-4xl font-bold metal-text">{perfect ? t('perfect') : t('lessonComplete')}</h1>
           <p className="text-muted mt-2">{tl(lesson.title)}</p>
         </div>
+        {unitJustDone ? (
+          <div className="card w-full p-4 border-accent2/40 bg-accent2/5">
+            <p className="font-display text-lg font-bold flex items-center justify-center gap-2">
+              <Note size={18} className="text-accent2" /> {t('unitSongTitle')}
+            </p>
+            <button className="btn-ghost w-full mt-2" onClick={() => playSong()} disabled={songPlaying}>
+              {songPlaying ? t('playing') : t('listenSong')}
+            </button>
+            <p className="text-sm text-muted mt-1">{t('songNextUnit')}</p>
+          </div>
+        ) : (
+          songSaved && (
+            <div className="w-full">
+              <p className="chip bg-accent2/15 text-accent2 mx-auto">
+                <Note size={14} /> {t('addedToSong')}
+              </p>
+              <PlaySongButton className="w-full mt-2" />
+            </div>
+          )
+        )}
         <div className="grid grid-cols-3 gap-3 w-full">
           <ResultTile icon={<Bolt size={22} />} label={t('xpEarned')} value={`+${result.xp}`} tone="text-accent2" />
           <ResultTile icon={<Star size={22} />} label={t('accuracy')} value={`${result.accuracy}%`} tone="text-success" />

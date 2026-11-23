@@ -7,6 +7,7 @@ import { allLessons } from '../src/content/course'
 import { buildQuestion } from '../src/exercises/build'
 import { midi } from '../src/lib/music'
 import { INSTRUMENTS } from '../src/lib/instruments'
+import { MOTIF_LENGTH, NOTE_RE, slotKey } from '../src/lib/song'
 import manifest from '../public/samples/manifest.json'
 import { readFileSync, readdirSync } from 'node:fs'
 
@@ -24,6 +25,23 @@ for (const l of allLessons) {
   const max = Math.max(l.exercises.length, ...Object.values(l.variants ?? {}).map((v) => v.exercises.length))
   if (!catalog.has(l.id)) (problems++, console.log(`✗ ${l.id} missing from the server lesson catalog (run scripts/lesson-catalog.ts and add a migration)`))
   else if (catalog.get(l.id)! < max) (problems++, console.log(`✗ ${l.id}: catalog allows ${catalog.get(l.id)} exercises but content has ${max}`))
+}
+
+// creative steps ("your song"): valid choices, and each part of the song is created by exactly one lesson
+const slots = new Map<string, string>()
+for (const l of allLessons) {
+  const c = l.create
+  if (!c) continue
+  const key = slotKey(c.slot)
+  if (slots.has(key)) (problems++, console.log(`✗ ${l.id}: song part "${key}" is already created in ${slots.get(key)}`))
+  slots.set(key, l.id)
+  if (c.slot.kind === 'motif-note' && (c.slot.index < 0 || c.slot.index >= MOTIF_LENGTH)) (problems++, console.log(`✗ ${l.id}: motif index ${c.slot.index} out of range`))
+  if (c.slot.kind !== 'register') {
+    const opts = c.options ?? []
+    if (opts.length < 2) (problems++, console.log(`✗ ${l.id}: creative step needs at least 2 options`))
+    if (new Set(opts).size !== opts.length) (problems++, console.log(`✗ ${l.id}: duplicate creative options`))
+    for (const n of opts) if (!NOTE_RE.test(n)) (problems++, console.log(`✗ ${l.id}: "${n}" is not a valid note for the song`))
+  }
 }
 
 let checked = 0
@@ -58,5 +76,5 @@ for (const lesson of allLessons)
           }
           if (problems > 30) process.exit(1)
         }
-console.log(problems ? `${problems} problems` : `✓ ${allLessons.length} lessons, 3 genres, ${checked} generated questions OK`)
+console.log(problems ? `${problems} problems` : `✓ ${allLessons.length} lessons, 3 genres, ${checked} generated questions, ${slots.size} song steps OK`)
 process.exit(problems ? 1 : 0)

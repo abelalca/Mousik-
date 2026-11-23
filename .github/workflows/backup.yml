@@ -34,7 +34,7 @@ jobs:
           npx supabase db dump --data-only -f data.sql
           tar czf - schema.sql data.sql | gpg --batch --symmetric --cipher-algo AES256 --passphrase "$BACKUP_PASSPHRASE" -o backup.tgz.gpg
           rm -f schema.sql data.sql
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: prod-backup-${{ github.run_id }}
           path: backup.tgz.gpg

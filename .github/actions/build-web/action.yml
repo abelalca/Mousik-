@@ -1,0 +1,38 @@
+name: Build web
+description: Installs dependencies, builds the app and writes the environment's runtime config.json
+inputs:
+  env-name:
+    description: local | dev | qa | prod
+    required: true
+  supabase-url:
+    description: Supabase project URL (public)
+    default: ''
+  supabase-anon-key:
+    description: Supabase anon key (public, protected by RLS)
+    default: ''
+  auth-providers:
+    description: Comma-separated OAuth providers enabled in Supabase (google,apple)
+    default: ''
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+    - run: npm ci
+      shell: bash
+    - run: npm run build
+      shell: bash
+    - name: Write runtime config.json
+      shell: bash
+      env:
+        ENV_NAME: ${{ inputs.env-name }}
+        SB_URL: ${{ inputs.supabase-url }}
+        SB_KEY: ${{ inputs.supabase-anon-key }}
+        PROVIDERS: ${{ inputs.auth-providers }}
+      run: |
+        jq -n --arg env "$ENV_NAME" --arg url "$SB_URL" --arg key "$SB_KEY" --arg p "$PROVIDERS" \
+          '{env: $env, supabaseUrl: $url, supabaseAnonKey: $key, authProviders: ($p | split(",") | map(select(length > 0)))}' \
+          > dist/config.json
+        echo "config.json for $ENV_NAME:"; jq 'del(.supabaseAnonKey)' dist/config.json

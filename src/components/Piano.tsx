@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { fromMidi, isBlack, keyLabel, midi } from '@/lib/music'
 import { playNote } from '@/lib/audio'
 import { useStore } from '@/store/useStore'
+import type { InstrumentId } from '@/lib/instruments'
 
 export type KeyMark = 'correct' | 'wrong' | 'hint'
 
@@ -14,10 +15,12 @@ interface Props {
   onPress?: (note: string, midi: number) => void
   disabled?: boolean
   className?: string
+  /** Sound the keys make (default piano). */
+  instrument?: InstrumentId
 }
 
 /** Responsive piano keyboard. Black keys are positioned in % so it scales to any width. */
-export function Piano({ from, to, highlight = [], marks = {}, labels = false, onPress, disabled, className = '' }: Props) {
+export function Piano({ from, to, highlight = [], marks = {}, labels = false, onPress, disabled, className = '', instrument = 'piano' }: Props) {
   const notation = useStore((s) => s.settings.notation)
   const lo = midi(from)
   const hi = midi(to)
@@ -34,7 +37,7 @@ export function Piano({ from, to, highlight = [], marks = {}, labels = false, on
 
   const press = (m: number) => {
     if (disabled) return
-    playNote(fromMidi(m), 1.4)
+    playNote(fromMidi(m), 1.4, 0, instrument)
     onPress?.(fromMidi(m), m)
   }
 

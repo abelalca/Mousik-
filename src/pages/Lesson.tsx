@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { findLesson, isUnlocked } from '@/content/course'
 import type { Exercise } from '@/content/types'
-import { buildQuestion, type Question } from '@/exercises/build'
+import { buildQuestion, type Clip, type Question } from '@/exercises/build'
 import { useT } from '@/lib/i18n'
 import { useStore, liveStreak } from '@/store/useStore'
-import { playChord, playFeedback, playSequence, warmUp } from '@/lib/audio'
+import { playClips, playFeedback, preload } from '@/lib/audio'
+import { startAttempt, submitCompletion } from '@/lib/progressApi'
+import { InstrumentChip } from '@/components/InstrumentCards'
+import { allLessons } from '@/content/course'
 import { midi } from '@/lib/music'
 import { Mascot, type Mood } from '@/components/Mascot'
 import { RichText, useRich } from '@/components/RichText'
@@ -33,7 +36,10 @@ export default function LessonPage() {
 
   const [phase, setPhase] = useState<'theory' | 'practice' | 'done'>('theory')
   const [card, setCard] = useState(0)
-  const [queue, setQueue] = useState<Item[]>(() => lesson?.exercises.map((ex, i) => ({ uid: i, ex, retry: false })) ?? [])
+  // Genre variants replace the shared content (fixed for the whole lesson, even if settings change).
+  const [content] = useState(() => (lesson ? lesson.variants?.[genre] ?? { cards: lesson.cards, exercises: lesson.exercises } : { cards: [], exercises: [] }))
+  const lessonSeed = Math.max(0, allLessons.findIndex((l) => l.id === id)) * 5
+  const [queue, setQueue] = useState<Item[]>(() => content.exercises.map((ex, i) => ({ uid: i, ex, retry: false })))
   const [pos, setPos] = useState(0)
   const [solved, setSolved] = useState(0)
   const [mistakes, setMistakes] = useState(0)
@@ -44,11 +50,23 @@ export default function LessonPage() {
   const [confirmQuit, setConfirmQuit] = useState(false)
   const [result, setResult] = useState<{ xp: number; accuracy: number } | null>(null)
 
-  useEffect(() => warmUp(), [])
+  // Ask the server for an attempt id (it validates unlock order); results are sent with it.
+  const attemptId = useRef<Promise<string | null> | null>(null)
+  useEffect(() => {
+    if (lesson && !attemptId.current) attemptId.current = startAttempt(lesson.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Download every instrument this lesson will use while the learner reads the theory.
+  useEffect(() => {
+    const ids = new Set(content.exercises.map((ex, i) => buildQuestion(ex, { locale, notation, genre, seed: lessonSeed + i }).instrument))
+    preload(['piano', ...ids])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const item = queue[pos]
   const q: Question | null = useMemo(
-    () => (item ? buildQuestion(item.ex, locale, notation) : null),
+    () => (item ? buildQuestion(item.ex, { locale, notation, genre, seed: lessonSeed + item.uid }) : null),
     // rebuild only when the item changes (keeps shuffled options stable)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [item?.uid, item?.retry, pos, locale, notation],
@@ -63,13 +81,12 @@ export default function LessonPage() {
   if (!lesson) return <Navigate to="/" replace />
   if (!isUnlocked(lesson.id, progress.completed)) return <Navigate to="/" replace />
 
-  const total = lesson.exercises.length
-  const cardsN = lesson.cards.length
+  const total = content.exercises.length
+  const cardsN = content.cards.length
   const pct = phase === 'theory' ? (card / (cardsN + total)) * 100 : phase === 'practice' ? ((cardsN + solved) / (cardsN + total)) * 100 : 100
 
-  function playAudio(a: { notes: string[]; mode?: 'seq' | 'chord' }) {
-    if (a.mode === 'chord') playChord(a.notes)
-    else playSequence(a.notes, 0.75)
+  function playAudio(clips: Clip[]) {
+    playClips(clips)
   }
 
   function grade(ok: boolean) {
@@ -113,6 +130,10 @@ export default function LessonPage() {
     const accuracy = Math.round(((total - firstTryWrong.size) / total) * 100)
     const xp = 10 + (firstTryWrong.size === 0 ? 5 : 0)
     completeLesson(lesson!.id, xp, accuracy)
+    // Official XP/streak come back from the server (queued if offline).
+    attemptId.current?.then((id) => {
+      if (id) submitCompletion(id, lesson!.id, total - firstTryWrong.size, total)
+    })
     setResult({ xp, accuracy })
     setPhase('done')
   }
@@ -162,7 +183,7 @@ export default function LessonPage() {
         <AnimatePresence mode="wait">
           {phase === 'theory' ? (
             <motion.div key={`c${card}`} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-              <TheoryView lessonCard={lesson.cards[card]} genre={genre} />
+              <TheoryView lessonCard={content.cards[card]} genre={genre} />
             </motion.div>
           ) : (
             q && (
@@ -322,7 +343,7 @@ function QuestionView({
   onSelect: (k: string) => void
   onKey: (note: string, m: number) => void
   marks: Record<number, KeyMark>
-  onPlay: (a: { notes: string[]; mode?: 'seq' | 'chord' }) => void
+  onPlay: (clips: Clip[]) => void
 }) {
   const { t, locale } = useT()
   const { inline } = useRich()
@@ -341,8 +362,12 @@ function QuestionView({
         </div>
       )}
 
-      {q.visual && q.kind === 'options' && <Demo demo={q.visual} />}
-      {q.visual && q.kind === 'piano' && <Demo demo={q.visual} />}
+      {!q.hideInstrument && q.instrument !== 'piano' && (
+        <div className="flex justify-center -mt-2">
+          <InstrumentChip id={q.instrument} />
+        </div>
+      )}
+      {q.visual && <Demo demo={q.visual} />}
 
       {q.kind === 'options' ? (
         <div className={`grid gap-3 ${q.options.length === 4 && q.options.every((o) => o.label.length < 14) ? 'grid-cols-2' : 'grid-cols-1'}`}>
@@ -350,7 +375,7 @@ function QuestionView({
             const state =
               status !== 'idle' && o.correct ? 'correct' : status === 'wrong' && selected === o.key ? 'wrong' : selected === o.key ? 'selected' : 'idle'
             return (
-              <button key={o.key} className={`option ${o.label.length < 8 ? 'text-center text-xl font-display font-bold' : ''}`} data-state={state} onClick={() => onSelect(o.key)} disabled={status !== 'idle'}>
+              <button key={o.key} className={`option ${q.options.every((x) => x.label.length < 8) ? 'text-center text-xl font-display font-bold' : ''}`} data-state={state} onClick={() => onSelect(o.key)} disabled={status !== 'idle'}>
                 <span className="flex items-center justify-between gap-2">
                   <span className="flex-1">{inline(o.label)}</span>
                   {state === 'correct' && <Check size={18} className="text-success" />}
@@ -361,7 +386,7 @@ function QuestionView({
         </div>
       ) : (
         <div className="pt-4">
-          <Piano from={q.range[0]} to={q.range[1]} labels={q.labels ? true : false} marks={marks} onPress={onKey} disabled={status !== 'idle'} />
+          <Piano from={q.range[0]} to={q.range[1]} labels={q.labels ? true : false} marks={marks} onPress={onKey} disabled={status !== 'idle'} instrument={q.instrument} />
         </div>
       )}
     </div>

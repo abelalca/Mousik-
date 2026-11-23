@@ -8,14 +8,17 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b",
-    "validate": "tsx --tsconfig tsconfig.json scripts/validate-content.ts"
+    "validate": "tsx --tsconfig tsconfig.json scripts/validate-content.ts",
+    "build:preview": "vite build --mode preview --outDir dist-preview",
+    "test": "vitest run",
+    "size": "node scripts/check-size.mjs dist"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.46.1",
+    "@supabase/supabase-js": "^2.119.2",
     "framer-motion": "^11.11.17",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0",
+    "react-router-dom": "^6.30.6",
     "tone": "^15.0.4",
     "vexflow": "^4.2.5",
     "zustand": "^5.0.1"
@@ -26,10 +29,12 @@
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
+    "supabase": "^2.62.10",
     "tailwindcss": "^3.4.15",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vite": "^5.4.11",
-    "vite-plugin-pwa": "^0.21.1"
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^2.1.8"
   }
 }

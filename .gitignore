@@ -4,3 +4,5 @@ dist
 .env.local
 *.log
 dev-dist
+dist-preview
+*.tsbuildinfo

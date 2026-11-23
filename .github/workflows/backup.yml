@@ -1,0 +1,41 @@
+# Nightly encrypted backup of the production database (the free plan has no automatic backups).
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    environment: production-backup
+    timeout-minutes: 20
+    if: vars.SUPABASE_PROJECT_REF != ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Dump and encrypt
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          test -n "$BACKUP_PASSPHRASE" || { echo "BACKUP_PASSPHRASE is required"; exit 1; }
+          npx supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
+          npx supabase db dump -f schema.sql
+          npx supabase db dump --data-only -f data.sql
+          tar czf - schema.sql data.sql | gpg --batch --symmetric --cipher-algo AES256 --passphrase "$BACKUP_PASSPHRASE" -o backup.tgz.gpg
+          rm -f schema.sql data.sql
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prod-backup-${{ github.run_id }}
+          path: backup.tgz.gpg
+          retention-days: 14

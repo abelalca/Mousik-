@@ -11,6 +11,22 @@ const ui = {
   password: { en: 'Password', es: 'Contraseña' },
   orContinue: { en: 'or', es: 'o' },
   google: { en: 'Continue with Google', es: 'Continuar con Google' },
+  apple: { en: 'Continue with Apple', es: 'Continuar con Apple' },
+  passwordRule: {
+    en: 'Use at least 8 characters, with uppercase, lowercase and a number.',
+    es: 'Usa al menos 8 caracteres, con mayúsculas, minúsculas y un número.',
+  },
+  deleteAccount: { en: 'Delete account', es: 'Eliminar cuenta' },
+  deleteAccountBody: {
+    en: 'This permanently deletes your account, your progress and all your data. It cannot be undone.',
+    es: 'Esto elimina para siempre tu cuenta, tu progreso y todos tus datos. No se puede deshacer.',
+  },
+  deleteAccountLocal: {
+    en: 'This deletes all the progress saved on this device. It cannot be undone.',
+    es: 'Esto borra todo el progreso guardado en este dispositivo. No se puede deshacer.',
+  },
+  deleteConfirm: { en: 'Yes, delete everything', es: 'Sí, eliminar todo' },
+  cancel: { en: 'Cancel', es: 'Cancelar' },
   noAccount: { en: "Don't have an account?", es: '¿No tienes cuenta?' },
   yesAccount: { en: 'Already have an account?', es: '¿Ya tienes cuenta?' },
   checkEmail: { en: 'Check your inbox to confirm your email, then sign in.', es: 'Revisa tu correo para confirmar tu cuenta y luego inicia sesión.' },
@@ -102,6 +118,11 @@ const ui = {
   on: { en: 'On', es: 'Activado' },
   off: { en: 'Off', es: 'Desactivado' },
   name: { en: 'Name', es: 'Nombre' },
+  credits: { en: 'Sound credits', es: 'Créditos de sonido' },
+  creditsInstruments: { en: 'Orchestral and band instruments', es: 'Instrumentos de orquesta y banda' },
+  creditsSources: { en: 'recordings from public-domain sources', es: 'grabaciones de fuentes de dominio público' },
+  creditsSynths: { en: 'Synthesizers and drums generated with', es: 'Sintetizadores y batería generados con' },
+  creditsNotation: { en: 'Music notation by', es: 'Partituras con' },
 } satisfies Record<string, L>
 
 export type UiKey = keyof typeof ui

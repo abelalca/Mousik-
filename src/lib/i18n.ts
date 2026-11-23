@@ -123,6 +123,30 @@ const ui = {
   creditsSources: { en: 'recordings from public-domain sources', es: 'grabaciones de fuentes de dominio público' },
   creditsSynths: { en: 'Synthesizers and drums generated with', es: 'Sintetizadores y batería generados con' },
   creditsNotation: { en: 'Music notation by', es: 'Partituras con' },
+  // your song
+  mySong: { en: 'My song', es: 'Mi canción' },
+  yourSong: { en: 'Your song', es: 'Tu canción' },
+  noWrongAnswers: { en: 'There are no wrong answers here.', es: 'Aquí no hay respuestas incorrectas.' },
+  addToSong: { en: 'Add to my song', es: 'Guardar en mi canción' },
+  addedToSong: { en: 'Added to your song!', es: '¡Añadido a tu canción!' },
+  listenSong: { en: 'Listen to my song', es: 'Escuchar mi canción' },
+  playing: { en: 'Playing…', es: 'Sonando…' },
+  songIntro: {
+    en: 'Every lesson adds a piece. Finish a unit and Mo plays it for you.',
+    es: 'Cada lección añade una pieza. Termina una unidad y Mo te la tocará.',
+  },
+  songEmpty: { en: 'Your song is still silent. Finish your first lesson to add its first piece!', es: 'Tu canción aún está en silencio. ¡Termina tu primera lección para añadir su primera pieza!' },
+  songPending: { en: 'Not created yet', es: 'Aún sin crear' },
+  createNow: { en: 'Create now', es: 'Crear ahora' },
+  createdIn: { en: 'Lesson', es: 'Lección' },
+  slotRegister: { en: 'Register', es: 'Registro' },
+  slotNote: { en: 'Note', es: 'Nota' },
+  slotBass: { en: "Mo's low note", es: 'Nota grave de Mo' },
+  regLow: { en: 'Low', es: 'Grave' },
+  regMid: { en: 'Middle', es: 'Medio' },
+  regHigh: { en: 'High', es: 'Agudo' },
+  unitSongTitle: { en: 'Unit complete! Mo plays your song', es: '¡Unidad completada! Mo toca tu canción' },
+  songNextUnit: { en: 'Next, in Unit 2, you will give your song a rhythm.', es: 'En la Unidad 2 le darás ritmo a tu canción.' },
 } satisfies Record<string, L>
 
 export type UiKey = keyof typeof ui

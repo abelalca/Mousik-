@@ -1,6 +1,7 @@
 import type { ByGenre, L } from '@/lib/types'
 import type { Notation } from '@/lib/music'
 import type { InstrumentId, InstrumentRef } from '@/lib/instruments'
+import type { SongSlot } from '@/lib/song'
 
 export type Clef = 'treble' | 'bass' | 'grand'
 
@@ -71,6 +72,21 @@ export type Exercise =
   /** Hear a phrase and name the instrument. 'auto' rotates through the genre's instruments. */
   | (Base & { type: 'identify-instrument'; instrument: InstrumentRef })
 
+/**
+ * The creative step at the end of a lesson: the learner picks one part of their song.
+ * There are no wrong answers and it never costs hearts.
+ */
+export interface CreateStep {
+  slot: SongSlot
+  prompt: L
+  /** Short hint shown under the prompt (why each choice sounds the way it does). */
+  tip?: L
+  /** Notes to choose from (ignored for the register step). */
+  options?: string[]
+  /** 'staff' also draws the melody so far on a staff (with the candidate highlighted). */
+  show?: 'name' | 'staff'
+}
+
 export interface Lesson {
   id: string
   title: L
@@ -79,6 +95,8 @@ export interface Lesson {
   exercises: Exercise[]
   /** Genre-specific content that replaces cards/exercises (e.g. "the instruments of your genre"). */
   variants?: ByGenre<{ cards: TheoryCard[]; exercises: Exercise[] }>
+  /** Creative step that adds a part to the learner's song (after the exercises). */
+  create?: CreateStep
 }
 
 export interface Unit {

@@ -1,5 +1,6 @@
 import type { Lesson } from './types'
 import { instrumentsLesson } from './unit1-instruments'
+import { unit1Song } from './unit1-song'
 
 /**
  * UNIT 1 — Pitch, the keyboard and the staff.
@@ -553,4 +554,5 @@ const l5: Lesson = {
   ],
 }
 
-export const unit1Lessons: Lesson[] = [l1, instrumentsLesson, l2, l3, l4, l5]
+// Every lesson ends with a creative step that grows the learner's song (see unit1-song.ts).
+export const unit1Lessons: Lesson[] = [l1, instrumentsLesson, l2, l3, l4, l5].map((l) => ({ ...l, create: unit1Song[l.id] }))

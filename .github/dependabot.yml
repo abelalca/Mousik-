@@ -1,14 +1,27 @@
+# Automatic dependency updates. Major versions are upgraded deliberately (they can break the build),
+# so Dependabot only proposes minor/patch updates here; security fixes are always proposed.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
+    target-branch: main
     schedule:
       interval: weekly
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     open-pull-requests-limit: 5
   - package-ecosystem: github-actions
     directory: /
+    target-branch: main
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']

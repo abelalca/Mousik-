@@ -14,6 +14,8 @@ import Onboarding from '@/pages/Onboarding'
 import Home from '@/pages/Home'
 import Profile from '@/pages/Profile'
 const LessonPage = lazy(() => import('@/pages/Lesson'))
+// Dev-only character sheet (removed from production builds).
+const BandPreview = import.meta.env.DEV ? lazy(() => import('@/pages/BandPreview')) : null
 
 export default function App() {
   const { user, ready, init } = useAuth()
@@ -41,6 +43,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
+        {BandPreview && <Route path="/dev/band" element={<Suspense fallback={null}><BandPreview /></Suspense>} />}
         {!user ? (
           <>
             <Route path="/" element={<Welcome />} />

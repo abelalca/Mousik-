@@ -12,6 +12,7 @@ describe('band characters', () => {
     for (const id of CHARACTER_IDS) {
       expect(CHARACTERS[id].id).toBe(id)
       expect(CHARACTERS[id].species.en && CHARACTERS[id].species.es).toBeTruthy()
+      expect(CHARACTERS[id].name).toBeTruthy()
       expect(CHARACTERS[id].color).toMatch(/^(#[0-9a-f]{6}|rgb\(var\(--accent\)\))$/)
     }
   })

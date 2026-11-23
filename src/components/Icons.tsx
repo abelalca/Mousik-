@@ -88,3 +88,13 @@ export const Play = (p: P) => (
     <path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5Z" />
   </svg>
 )
+/** Mo's band: three musicians. */
+export const Band = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="7" r="3" />
+    <circle cx="5" cy="9" r="2.3" />
+    <circle cx="19" cy="9" r="2.3" />
+    <path d="M6.5 20v-1.5a5.5 5.5 0 0 1 11 0V20" />
+    <path d="M1.5 19v-.8A3.6 3.6 0 0 1 5 14.6M22.5 19v-.8a3.6 3.6 0 0 0-3.5-3.6" />
+  </svg>
+)

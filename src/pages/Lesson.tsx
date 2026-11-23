@@ -17,6 +17,9 @@ import { Demo } from '@/components/Demo'
 import { Piano, type KeyMark } from '@/components/Piano'
 import { Bolt, Bulb, Check, Flame, Heart, Note, Speaker, Star, X } from '@/components/Icons'
 import { CreateStepView } from '@/components/CreateStep'
+import { JoinBandOverlay } from '@/components/JoinBand'
+import { Character, type CharacterId } from '@/components/characters'
+import { joinsAfter, unitPresenter } from '@/content/band'
 import { PlaySongButton, useSongPlayer } from '@/components/SongPlayer'
 
 type Status = 'idle' | 'correct' | 'wrong'
@@ -88,6 +91,9 @@ export default function LessonPage() {
   const unit = lesson ? unitOf(lesson.id) : undefined
   const unitJustDone =
     phase === 'done' && !unitWasDone && !!unit?.lessons.length && unit.lessons.every((l) => useStore.getState().progress.completed[l.id])
+  // The unit's musician presents its theory and feedback.
+  const presenter: CharacterId = unit ? unitPresenter(unit.id) : 'mo'
+  const [joinClosed, setJoinClosed] = useState(false)
   // Finishing a unit: Mo plays the learner's song.
   useEffect(() => {
     if (unitJustDone) playSong()
@@ -221,6 +227,11 @@ export default function LessonPage() {
         <button className="btn-primary w-full mt-4" onClick={() => nav('/')}>
           {t('continue')}
         </button>
+        <AnimatePresence>
+          {unitJustDone && !joinClosed && unit && joinsAfter(unit.id).length > 0 && (
+            <JoinBandOverlay members={joinsAfter(unit.id)} onClose={() => setJoinClosed(true)} />
+          )}
+        </AnimatePresence>
       </div>
     )
   }
@@ -245,7 +256,7 @@ export default function LessonPage() {
         <AnimatePresence mode="wait">
           {phase === 'theory' ? (
             <motion.div key={`c${card}`} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-              <TheoryView lessonCard={content.cards[card]} genre={genre} />
+              <TheoryView lessonCard={content.cards[card]} genre={genre} presenter={presenter} />
             </motion.div>
           ) : (
             q && (
@@ -269,7 +280,7 @@ export default function LessonPage() {
             >
               <div className="max-w-2xl mx-auto px-4 pt-4 flex gap-3 items-start">
                 <div className="hidden sm:block -mt-2">
-                  <Mascot mood={mood} size={64} />
+                  <Character id={presenter} mood={mood} size={64} />
                 </div>
                 <div className="flex-1">
                   <p className={`font-display text-2xl font-bold ${status === 'correct' ? 'text-success' : 'text-danger'}`}>
@@ -356,7 +367,15 @@ function ResultTile({ icon, label, value, tone }: { icon: React.ReactNode; label
   )
 }
 
-function TheoryView({ lessonCard, genre }: { lessonCard: NonNullable<ReturnType<typeof findLesson>>['cards'][number]; genre: 'classical' | 'pop' | 'rock' }) {
+function TheoryView({
+  lessonCard,
+  genre,
+  presenter,
+}: {
+  lessonCard: NonNullable<ReturnType<typeof findLesson>>['cards'][number]
+  genre: 'classical' | 'pop' | 'rock'
+  presenter: CharacterId
+}) {
   const { t, tl } = useT()
   const notation = useStore((s) => s.settings.notation)
   const { plain } = useRich()
@@ -364,7 +383,7 @@ function TheoryView({ lessonCard, genre }: { lessonCard: NonNullable<ReturnType<
   return (
     <div className="pt-2 space-y-5">
       <div className="flex items-end gap-3">
-        <Mascot mood="idle" size={72} />
+        <Character id={presenter} mood="idle" size={72} />
         <div className="pb-2">
           <span className="chip bg-accent/10 text-accent text-xs uppercase tracking-wider">{t('theory')}</span>
           <h1 className="text-3xl font-bold mt-1 leading-tight">{plain(tl(lessonCard.title))}</h1>

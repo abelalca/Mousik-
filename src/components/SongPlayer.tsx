@@ -4,6 +4,8 @@ import { SONG_BPM, hasAnything, songEvents, type Song } from '@/lib/song'
 import { useStore } from '@/store/useStore'
 import { useT } from '@/lib/i18n'
 import { Play } from './Icons'
+import { PART_PLAYER } from '@/content/band'
+import type { CharacterId } from './characters'
 
 /** Plays a song (defaults to the learner's own) and tracks whether it is sounding. */
 export function useSongPlayer() {
@@ -17,11 +19,14 @@ export function useSongPlayer() {
     [],
   )
   const play = useCallback(
-    async (song: Song = useStore.getState().song, repeats = 2) => {
+    async (song: Song = useStore.getState().song, repeats = 2, muted: ReadonlySet<CharacterId> = new Set()) => {
       if (!hasAnything(song)) return
+      // One layer per musician: muted musicians' parts are left out.
+      const events = songEvents(song, genre, { repeats }).filter((e) => !muted.has(PART_PLAYER[e.part]))
+      if (!events.length) return
       setPlaying(true)
       try {
-        await playTimeline(songEvents(song, genre, { repeats }), SONG_BPM)
+        await playTimeline(events, SONG_BPM)
       } finally {
         if (alive.current) setPlaying(false)
       }

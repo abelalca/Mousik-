@@ -38,3 +38,15 @@ describe('band', () => {
       }
   })
 })
+
+import { createElement } from 'react'
+import { renderToString } from 'react-dom/server'
+import { MemoryRouter } from 'react-router-dom'
+import { JoinBandOverlay } from '@/components/JoinBand'
+
+describe('join band overlay', () => {
+  it('announces the musician who joins', () => {
+    const html = renderToString(createElement(MemoryRouter, null, createElement(JoinBandOverlay, { members: joinsAfter('u2'), onClose: () => {} })))
+    expect(html).toMatch(/Hamster|Hámster/)
+  })
+})

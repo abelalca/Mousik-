@@ -17,6 +17,8 @@ const LessonPage = lazy(() => import('@/pages/Lesson'))
 // Notation (VexFlow) is heavy: the song page loads it on demand, like lessons do.
 const SongPage = lazy(() => import('@/pages/Song'))
 const BandPage = lazy(() => import('@/pages/Band'))
+// Dev-only character sheet (removed from production builds).
+const BandPreview = import.meta.env.DEV ? lazy(() => import('@/pages/BandPreview')) : null
 
 export default function App() {
   const { user, ready, init } = useAuth()
@@ -44,6 +46,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
+        {BandPreview && <Route path="/dev/band" element={<Suspense fallback={null}><BandPreview /></Suspense>} />}
         {!user ? (
           <>
             <Route path="/" element={<Welcome />} />

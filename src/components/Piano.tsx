@@ -43,7 +43,7 @@ export function Piano({ from, to, highlight = [], marks = {}, labels = false, on
     if (mark === 'correct') return 'bg-success text-white'
     if (mark === 'wrong') return 'bg-danger text-white'
     if (mark === 'hint') return 'bg-success/35 text-ink'
-    if (hl.has(m)) return black ? 'bg-accent text-accent-ink' : 'bg-accent/25 text-ink'
+    if (hl.has(m)) return 'bg-accent text-accent-ink'
     return black ? 'bg-[#1a1a1f] text-white/80' : 'bg-white text-[#555]'
   }
 

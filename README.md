@@ -1,5 +1,7 @@
 # Mousik 🎹🐭
 
+![Mousik en sus tres temas: clásica, pop y rock](docs/preview.png)
+
 App web (y móvil, instalable como PWA) estilo Duolingo para aprender **teoría musical y composición desde cero hasta experto**. El objetivo final es que la persona componga su propia pieza.
 
 - **Bilingüe**: español / inglés.

@@ -78,6 +78,20 @@ export default function Profile() {
         </Field>
       </section>
 
+      <details className="card p-5 text-sm text-muted">
+        <summary className="font-semibold text-ink cursor-pointer">{t('credits')}</summary>
+        <ul className="mt-3 space-y-2 list-disc pl-5">
+          <li>
+            Piano: <em>Salamander Grand Piano</em> — Alexander Holm, CC-BY 3.0.
+          </li>
+          <li>
+            {t('creditsInstruments')}: <em>tonejs-instruments</em> — Nicholas Brosowsky, CC-BY 3.0 (
+            {t('creditsSources')}).
+          </li>
+          <li>{t('creditsSynths')} Tone.js (MIT). {t('creditsNotation')} VexFlow (MIT).</li>
+        </ul>
+      </details>
+
       <button className="btn-ghost w-full !text-danger" onClick={signOut}>
         {t('signOut')}
       </button>

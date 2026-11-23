@@ -4,6 +4,7 @@ import { midi, noteName, parse } from '@/lib/music'
 import { playSequence } from '@/lib/audio'
 import { useStore } from '@/store/useStore'
 import type { Clef } from '@/content/types'
+import type { InstrumentId } from '@/lib/instruments'
 import { Play } from './Icons'
 
 const cssColor = (name: string) => {
@@ -23,10 +24,11 @@ interface Props {
   playable?: boolean
   highlight?: number
   className?: string
+  instrument?: InstrumentId
 }
 
 /** Renders notes (as whole notes) on a treble, bass or grand staff using VexFlow. */
-export function Staff({ clef, notes, labels, playable, highlight, className = '' }: Props) {
+export function Staff({ clef, notes, labels, playable, highlight, className = '', instrument = 'piano' }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const { genre, notation } = useStore((s) => s.settings)
 
@@ -111,11 +113,11 @@ export function Staff({ clef, notes, labels, playable, highlight, className = ''
 
   return (
     <div className={`relative ${className}`}>
-      <div ref={ref} className={playable ? 'cursor-pointer' : ''} onClick={() => playable && playSequence(notes, 0.55)} />
+      <div ref={ref} className={playable ? 'cursor-pointer' : ''} onClick={() => playable && playSequence(notes, 0.55, instrument)} />
       {playable && (
         <button
           type="button"
-          onClick={() => playSequence(notes, 0.55)}
+          onClick={() => playSequence(notes, 0.55, instrument)}
           className="absolute top-1 right-1 chip bg-raised text-muted hover:text-ink"
           aria-label="Play"
         >

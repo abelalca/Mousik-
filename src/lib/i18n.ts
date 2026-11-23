@@ -102,6 +102,11 @@ const ui = {
   on: { en: 'On', es: 'Activado' },
   off: { en: 'Off', es: 'Desactivado' },
   name: { en: 'Name', es: 'Nombre' },
+  credits: { en: 'Sound credits', es: 'Créditos de sonido' },
+  creditsInstruments: { en: 'Orchestral and band instruments', es: 'Instrumentos de orquesta y banda' },
+  creditsSources: { en: 'recordings from public-domain sources', es: 'grabaciones de fuentes de dominio público' },
+  creditsSynths: { en: 'Synthesizers and drums generated with', es: 'Sintetizadores y batería generados con' },
+  creditsNotation: { en: 'Music notation by', es: 'Partituras con' },
 } satisfies Record<string, L>
 
 export type UiKey = keyof typeof ui

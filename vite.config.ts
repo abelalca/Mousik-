@@ -27,7 +27,18 @@ export default defineConfig({
         display: 'standalone',
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
       },
-      workbox: { globPatterns: ['**/*.{js,css,html,svg,woff2}'], maximumFileSizeToCacheInBytes: 4_000_000 },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,woff2,json}'],
+        maximumFileSizeToCacheInBytes: 4_000_000,
+        // Instrument samples are cached the first time they are played (works offline afterwards).
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/samples/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'mousik-samples', expiration: { maxEntries: 300 } },
+          },
+        ],
+      },
     }),
   ],
 })

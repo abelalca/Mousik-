@@ -1,4 +1,5 @@
 import type { Lesson } from './types'
+import { instrumentsLesson } from './unit1-instruments'
 
 /**
  * UNIT 1 — Pitch, the keyboard and the staff.
@@ -24,8 +25,8 @@ const l1: Lesson = {
       demo: {
         type: 'sounds',
         buttons: [
-          { label: { en: 'Low sound', es: 'Sonido grave' }, notes: ['C2'] },
-          { label: { en: 'High sound', es: 'Sonido agudo' }, notes: ['C6'] },
+          { label: { en: 'Low sound', es: 'Sonido grave' }, notes: ['E2', 'G2', 'A2'], instrument: 'role:bass' },
+          { label: { en: 'High sound', es: 'Sonido agudo' }, notes: ['E5', 'G5', 'A5'], instrument: 'role:lead' },
         ],
       },
       genre: {
@@ -208,6 +209,7 @@ const l2: Lesson = {
     { type: 'name-key', note: 'D4', range: ['C4', 'B4'] },
     { type: 'play-note', show: 'name', target: 'E4', anyOctave: true, range: ['C4', 'B5'] },
     { type: 'name-key', note: 'F4', range: ['C4', 'B4'] },
+    { type: 'identify-instrument', instrument: 'auto' },
     { type: 'play-note', show: 'name', target: 'G4', anyOctave: true, range: ['C4', 'B5'] },
     { type: 'name-key', note: 'A4', range: ['C4', 'B4'] },
     {
@@ -217,6 +219,7 @@ const l2: Lesson = {
       answer: 0,
     },
     { type: 'name-key', note: 'B4', range: ['C4', 'B4'] },
+    { type: 'ear-compare', instruments: ['role:bass', 'role:lead'], a: 'D3', b: 'D5', ask: 'lower' },
     { type: 'play-note', show: 'name', target: 'D4', anyOctave: true, range: ['C4', 'B5'] },
     { type: 'play-note', show: 'name', target: 'A4', anyOctave: true, range: ['C4', 'B5'] },
   ],
@@ -313,6 +316,7 @@ const l3: Lesson = {
       explain: { en: 'Higher on the staff = higher sound.', es: 'Más arriba en el pentagrama = sonido más agudo.' },
     },
     { type: 'name-note', clef: 'treble', note: 'C5' },
+    { type: 'identify-instrument', instrument: 'auto' },
     { type: 'name-note', clef: 'treble', note: 'D5' },
     { type: 'play-note', show: 'staff', clef: 'treble', target: 'G4', range: ['C4', 'B5'] },
     { type: 'name-note', clef: 'treble', note: 'E5' },
@@ -390,6 +394,7 @@ const l4: Lesson = {
       answer: 0,
     },
     { type: 'name-note', clef: 'bass', note: 'D3' },
+    { type: 'ear-compare', instruments: ['role:lead', 'role:bass'], a: 'A4', b: 'A2', ask: 'lower' },
     { type: 'name-note', clef: 'bass', note: 'E3' },
     { type: 'name-note', clef: 'grand', note: 'C4' },
     {
@@ -407,6 +412,7 @@ const l4: Lesson = {
       answer: 0,
     },
     { type: 'play-note', show: 'staff', clef: 'bass', target: 'G3', range: ['C3', 'B4'] },
+    { type: 'identify-instrument', instrument: 'role:bass' },
     { type: 'name-note', clef: 'bass', note: 'B2' },
     { type: 'play-note', show: 'staff', clef: 'grand', target: 'E4', range: ['C3', 'B4'] },
   ],
@@ -516,6 +522,7 @@ const l5: Lesson = {
     },
     { type: 'play-note', show: 'name', target: 'Bb4', anyOctave: true, range: ['C4', 'B4'], labels: false },
     { type: 'name-note', clef: 'treble', note: 'F#4' },
+    { type: 'identify-instrument', instrument: 'auto' },
     {
       type: 'choice',
       prompt: { en: 'Which is another name for {n:D#}?', es: '¿Cuál es otro nombre para {n:D#}?' },
@@ -546,4 +553,4 @@ const l5: Lesson = {
   ],
 }
 
-export const unit1Lessons: Lesson[] = [l1, l2, l3, l4, l5]
+export const unit1Lessons: Lesson[] = [l1, instrumentsLesson, l2, l3, l4, l5]

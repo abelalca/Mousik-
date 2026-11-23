@@ -61,7 +61,10 @@ export default function BandPage() {
               <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: CHARACTERS[sel.id].color }}>
                 {tl(sel.roleName)}
               </p>
-              <p className="font-display text-2xl font-bold leading-tight">{sel.id === 'mo' ? 'Mo' : tl(CHARACTERS[sel.id].species)}</p>
+              <p className="font-display text-2xl font-bold leading-tight">{CHARACTERS[sel.id].name}</p>
+              <p className="text-xs text-muted">
+                {tl(CHARACTERS[sel.id].species)} · <i>{CHARACTERS[sel.id].name}</i> {tl(sel.nameMeaning)}
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-muted">{t('playsIn')}:</span>
@@ -107,7 +110,7 @@ function StageSpot({ m, inBand, playing, active, onClick }: { m: BandMember; inB
         {inBand && <div className="absolute inset-x-2 bottom-0 h-3 rounded-full blur-md" style={{ background: CHARACTERS[m.id].color, opacity: 0.55 }} />}
         <Character id={m.id} size={86} mood={playing ? 'happy' : 'idle'} playing={playing} silhouette={!inBand && !met} />
       </div>
-      <span className="text-[13px] font-bold text-white leading-tight">{m.id === 'mo' ? 'Mo' : tl(CHARACTERS[m.id].species)}</span>
+      <span className="text-[13px] font-bold text-white leading-tight">{CHARACTERS[m.id].name}</span>
       {inBand ? (
         <span className="text-[11px] font-semibold" style={{ color: CHARACTERS[m.id].color }}>
           {tl(m.roleName)}

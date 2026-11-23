@@ -21,11 +21,14 @@ export interface BandMember {
   instrumentName?: Partial<ByGenre<L>>
   /** What this musician adds to the song. */
   adds: L
+  /** What the musician's name means (every name is a term from the score). */
+  nameMeaning: L
 }
 
 export const BAND: BandMember[] = [
   {
     id: 'mo',
+    nameMeaning: { en: 'comes from “motif”: the seed of every song.', es: 'viene de “motivo”: la semilla de toda canción.' },
     role: 'leader',
     roleName: { en: 'Band leader', es: 'Líder de la banda' },
     joinsUnit: null,
@@ -34,6 +37,7 @@ export const BAND: BandMember[] = [
   },
   {
     id: 'hamster',
+    nameMeaning: { en: 'is the speed of the beat.', es: 'es la velocidad del pulso.' },
     role: 'percussion',
     roleName: { en: 'Percussion', es: 'Percusión' },
     joinsUnit: 'u2',
@@ -43,6 +47,7 @@ export const BAND: BandMember[] = [
   },
   {
     id: 'squirrel',
+    nameMeaning: { en: '(trill) is a fast ornament between two neighbouring notes.', es: 'es un adorno rápido entre dos notas vecinas.' },
     role: 'soloist',
     roleName: { en: 'Soloist', es: 'Solista' },
     joinsUnit: 'u3',
@@ -51,6 +56,7 @@ export const BAND: BandMember[] = [
   },
   {
     id: 'capybara',
+    nameMeaning: { en: '(𝄐) means “pause and hold”.', es: '(𝄐) significa “detente y sostén”.' },
     role: 'accompanist',
     roleName: { en: 'Accompanist', es: 'Acompañante' },
     joinsUnit: 'u5',
@@ -59,6 +65,7 @@ export const BAND: BandMember[] = [
   },
   {
     id: 'beaver',
+    nameMeaning: { en: 'means “bass” in Italian.', es: 'significa “bajo” en italiano.' },
     role: 'bassist',
     roleName: { en: 'Bassist', es: 'Bajista' },
     joinsUnit: 'u6',
@@ -67,6 +74,7 @@ export const BAND: BandMember[] = [
   },
   {
     id: 'chinchilla',
+    nameMeaning: { en: 'means “sweetly, softly”.', es: 'significa “dulce, suave”.' },
     role: 'second-voice',
     roleName: { en: 'Second voice', es: 'Segunda voz' },
     joinsUnit: 'u7',

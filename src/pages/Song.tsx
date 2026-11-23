@@ -88,7 +88,7 @@ export default function SongPage() {
                     aria-pressed={on}
                   >
                     <Character id={m.id} size={44} silhouette={!inBand} playing={on && playing} />
-                    <span className="text-[11px] font-semibold text-ink">{m.id === 'mo' ? 'Mo' : tl(CHARACTERS[m.id].species)}</span>
+                    <span className="text-[11px] font-semibold text-ink">{CHARACTERS[m.id].name}</span>
                     <span className="text-[10px] text-muted">
                       {!inBand ? `${t('unit')} ${unitNumber(m.joinsUnit!)}` : muted.has(m.id) ? t('muted') : ''}
                     </span>

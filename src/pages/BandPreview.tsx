@@ -27,7 +27,7 @@ export default function BandPreview() {
             </div>
           ))}
           {ids.map((id) => (
-            <Row key={id} label={CHARACTERS[id].species.es} color={CHARACTERS[id].color}>
+            <Row key={id} label={`${CHARACTERS[id].name} · ${CHARACTERS[id].species.es}`} color={CHARACTERS[id].color}>
               {GENRES.map((g) => (
                 <div key={g} data-genre={g} className="bg-bg rounded-card grid place-items-center h-[200px] border border-line">
                   <Character id={id} genre={g} size={165} playing={playing} />
@@ -48,7 +48,7 @@ export default function BandPreview() {
             </div>
           ))}
           {ids.map((id) => (
-            <Row key={id} label={CHARACTERS[id].species.es} color={CHARACTERS[id].color}>
+            <Row key={id} label={`${CHARACTERS[id].name} · ${CHARACTERS[id].species.es}`} color={CHARACTERS[id].color}>
               {MOODS.map((m) => (
                 <div key={m} className="grid place-items-center h-[124px]">
                   <Character id={id} mood={m} size={104} />

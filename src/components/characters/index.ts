@@ -14,6 +14,8 @@ export type CharacterId = 'mo' | 'hamster' | 'squirrel' | 'capybara' | 'beaver' 
 
 export interface CharacterMeta {
   id: CharacterId
+  /** The musician's name: an Italian score term the learner meets in the course. */
+  name: string
   /** Name of the animal (bilingual). */
   species: L
   /** Signature color: outfit accents, and the color of this musician's layer in the song. */
@@ -24,12 +26,12 @@ export interface CharacterMeta {
 const MoWithKeys = (p: CharacterProps) => createElement(Mascot, { ...p, instrument: true })
 
 export const CHARACTERS: Record<CharacterId, CharacterMeta> = {
-  mo: { id: 'mo', species: { en: 'Mouse', es: 'Ratón' }, color: 'rgb(var(--accent))', Component: MoWithKeys },
-  hamster: { id: 'hamster', species: { en: 'Hamster', es: 'Hámster' }, color: HAMSTER_COLOR, Component: Hamster },
-  squirrel: { id: 'squirrel', species: { en: 'Squirrel', es: 'Ardilla' }, color: SQUIRREL_COLOR, Component: Squirrel },
-  capybara: { id: 'capybara', species: { en: 'Capybara', es: 'Capibara' }, color: CAPYBARA_COLOR, Component: Capybara },
-  beaver: { id: 'beaver', species: { en: 'Beaver', es: 'Castor' }, color: BEAVER_COLOR, Component: Beaver },
-  chinchilla: { id: 'chinchilla', species: { en: 'Chinchilla', es: 'Chinchilla' }, color: CHINCHILLA_COLOR, Component: Chinchilla },
+  mo: { id: 'mo', name: 'Mo', species: { en: 'Mouse', es: 'Ratón' }, color: 'rgb(var(--accent))', Component: MoWithKeys },
+  hamster: { id: 'hamster', name: 'Tempo', species: { en: 'Hamster', es: 'Hámster' }, color: HAMSTER_COLOR, Component: Hamster },
+  squirrel: { id: 'squirrel', name: 'Trino', species: { en: 'Squirrel', es: 'Ardilla' }, color: SQUIRREL_COLOR, Component: Squirrel },
+  capybara: { id: 'capybara', name: 'Fermata', species: { en: 'Capybara', es: 'Capibara' }, color: CAPYBARA_COLOR, Component: Capybara },
+  beaver: { id: 'beaver', name: 'Basso', species: { en: 'Beaver', es: 'Castor' }, color: BEAVER_COLOR, Component: Beaver },
+  chinchilla: { id: 'chinchilla', name: 'Dolce', species: { en: 'Chinchilla', es: 'Chinchilla' }, color: CHINCHILLA_COLOR, Component: Chinchilla },
 }
 
 export const CHARACTER_IDS: CharacterId[] = ['mo', 'hamster', 'squirrel', 'capybara', 'beaver', 'chinchilla']

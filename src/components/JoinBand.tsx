@@ -10,7 +10,7 @@ export function JoinBandOverlay({ members, onClose }: { members: BandMember[]; o
   const nav = useNavigate()
   const m = members[0]
   if (!m) return null
-  const name = m.id === 'mo' ? 'Mo' : tl(CHARACTERS[m.id].species)
+  const name = CHARACTERS[m.id].name
   return (
     <motion.div className="fixed inset-0 z-50 bg-black/60 grid place-items-center px-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.div

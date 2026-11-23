@@ -232,3 +232,30 @@ export async function playClips(clips: { notes: string[]; mode: 'seq' | 'chord' 
     }
   }
 }
+
+/** A sound placed on a timeline, in beats. */
+export interface TimelineEvent {
+  instrument: InstrumentId
+  notes: string | string[]
+  beat: number
+  len: number
+}
+
+/**
+ * Plays a multi-instrument timeline (e.g. the learner's song). All instruments are loaded first
+ * so every part starts together. Resolves when the last note has finished.
+ */
+export async function playTimeline(events: TimelineEvent[], bpm: number) {
+  if (muted || !events.length) return
+  const ids = [...new Set(events.map((e) => e.instrument))]
+  const vs = new Map(await Promise.all(ids.map(async (id) => [id, await voice(id)] as const)))
+  const beat = 60 / bpm
+  const t = Tone.now() + 0.08
+  let end = 0
+  for (const e of events) {
+    const notes = Array.isArray(e.notes) ? fitGroup(e.notes, e.instrument) : fitNote(e.notes, e.instrument)
+    vs.get(e.instrument)!.play(notes, e.len * beat, t + e.beat * beat)
+    end = Math.max(end, (e.beat + e.len) * beat)
+  }
+  await sleep(end + 0.3)
+}

@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useT } from '@/lib/i18n'
-import { Home, User } from './Icons'
+import { Home, Note, User } from './Icons'
 import { Stats } from './Stats'
 
 function Logo() {
@@ -28,6 +28,9 @@ export function Layout() {
           <NavLink to="/" end className={link}>
             <Home /> {t('learn')}
           </NavLink>
+          <NavLink to="/song" className={link}>
+            <Note /> {t('mySong')}
+          </NavLink>
           <NavLink to="/profile" className={link}>
             <User /> {t('profile')}
           </NavLink>
@@ -49,6 +52,9 @@ export function Layout() {
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-surface/95 backdrop-blur border-t border-line flex safe-bottom">
         <NavLink to="/" end className={mlink}>
           <Home size={22} /> {t('learn')}
+        </NavLink>
+        <NavLink to="/song" className={mlink}>
+          <Note size={22} /> {t('mySong')}
         </NavLink>
         <NavLink to="/profile" className={mlink}>
           <User size={22} /> {t('profile')}

@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import { useAuth } from './auth'
 import { flushPending } from './progressApi'
 import { useStore, type LessonRecord, type Settings } from '@/store/useStore'
+import { hasAnything, sanitizeSong } from './song'
 
 /** Only these settings are stored server-side (the database also validates them). */
 const remoteSettings = (s: Settings) => ({
@@ -25,6 +26,8 @@ export function useCloudSync() {
     let cancelled = false
     let ready = false
     let timer: ReturnType<typeof setTimeout> | undefined
+    let songTimer: ReturnType<typeof setTimeout> | undefined
+    let songReady = false
 
     const pushProfile = async () => {
       const s = useStore.getState()
@@ -37,6 +40,22 @@ export function useCloudSync() {
         })
         .eq('id', user.id)
     }
+
+    // The song is synced on its own so a problem with it never blocks profile/progress sync.
+    const pushSong = async () => {
+      const { error } = await supabase!.from('profiles').update({ song: useStore.getState().song }).eq('id', user.id)
+      if (error) console.warn('song sync:', error.message)
+    }
+    ;(async () => {
+      const { data, error } = await supabase!.from('profiles').select('song').eq('id', user.id).single()
+      if (cancelled || error) return
+      const remote = sanitizeSong(data.song)
+      const local = useStore.getState().song
+      // Keep the newest copy: the server's, or this device's (then upload it).
+      if (remote.updatedAt > local.updatedAt) useStore.getState().hydrateSong(remote)
+      else if (hasAnything(local) && local.updatedAt > remote.updatedAt) await pushSong()
+      songReady = true
+    })()
 
     ;(async () => {
       const [profileRes, progressRes] = await Promise.all([
@@ -65,6 +84,10 @@ export function useCloudSync() {
     })()
 
     const unsub = useStore.subscribe((s, prev) => {
+      if (songReady && s.song !== prev.song) {
+        clearTimeout(songTimer)
+        songTimer = setTimeout(pushSong, 800)
+      }
       if (!ready || (s.settings === prev.settings && s.onboarded === prev.onboarded)) return
       clearTimeout(timer)
       timer = setTimeout(pushProfile, 1000)
@@ -74,6 +97,7 @@ export function useCloudSync() {
     return () => {
       cancelled = true
       clearTimeout(timer)
+      clearTimeout(songTimer)
       unsub()
       window.removeEventListener('online', onOnline)
     }

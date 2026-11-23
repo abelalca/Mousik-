@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import type { Genre, Locale } from '@/lib/types'
 import type { Notation } from '@/lib/music'
 import { setMuted } from '@/lib/audio'
+import { emptySong, sanitizeSong, withSlot, type Song, type SongSlot } from '@/lib/song'
 
 export const MAX_HEARTS = 5
 export const HEART_REFILL_MS = 30 * 60 * 1000
@@ -48,6 +49,11 @@ interface State {
   progress: Progress
   updatedAt: number
   pendingCompletions: PendingCompletion[]
+  /** The learner's song (built one creative step per lesson). */
+  song: Song
+  setSongSlot: (slot: SongSlot, value: string) => void
+  /** Replaces the song with the server copy when it is newer. */
+  hydrateSong: (song: Song) => void
   setSettings: (s: Partial<Settings>) => void
   finishOnboarding: (s: Partial<Settings>) => void
   loseHeart: () => void
@@ -89,12 +95,15 @@ const initial = () => ({
   } as Progress,
   updatedAt: 0,
   pendingCompletions: [] as PendingCompletion[],
+  song: emptySong(),
 })
 
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
       ...initial(),
+      setSongSlot: (slot, value) => set({ song: withSlot(get().song, slot, value) }),
+      hydrateSong: (song) => set({ song }),
       setSettings: (s) => {
         set({ settings: { ...get().settings, ...s }, updatedAt: Date.now() })
         if (s.sound !== undefined) setMuted(!s.sound)
@@ -162,6 +171,11 @@ export const useStore = create<State>()(
     {
       name: 'mousik',
       version: 1,
+      // Older saves have no song; a damaged one is cleaned instead of crashing the app.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<State>
+        return { ...current, ...p, song: sanitizeSong(p.song) }
+      },
       onRehydrateStorage: () => (state) => state && setMuted(!state.settings.sound),
     },
   ),

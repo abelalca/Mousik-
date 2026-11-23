@@ -12,6 +12,9 @@ import { CreateStepView } from '@/components/CreateStep'
 import { useSongPlayer } from '@/components/SongPlayer'
 import { useRich } from '@/components/RichText'
 import { Check, Lock, Note, Play, X } from '@/components/Icons'
+import { CHARACTERS, Character, type CharacterId } from '@/components/characters'
+import { BAND, PART_PLAYER, isInBand, unitNumber } from '@/content/band'
+import { songEvents } from '@/lib/song'
 
 const REG_LABEL: Record<Register, UiKey> = { low: 'regLow', mid: 'regMid', high: 'regHigh' }
 
@@ -25,6 +28,17 @@ export default function SongPage() {
   const setSongSlot = useStore((s) => s.setSongSlot)
   const { play, playing } = useSongPlayer()
   const [editing, setEditing] = useState<CreateStep | null>(null)
+  const genre = useStore((s) => s.settings.genre)
+  // Layers: one per musician; tap to mute/unmute.
+  const [muted, setMuted] = useState<Set<CharacterId>>(new Set())
+  const withParts = new Set(songEvents(song, genre, { repeats: 1 }).map((e) => PART_PLAYER[e.part]))
+  const toggle = (id: CharacterId) =>
+    setMuted((m) => {
+      const n = new Set(m)
+      if (n.has(id)) n.delete(id)
+      else n.add(id)
+      return n
+    })
 
   const steps = allLessons.filter((l) => l.create).map((l) => ({ lesson: l, step: l.create! }))
   const melody = song.motif.filter((n): n is string => !!n)
@@ -53,9 +67,37 @@ export default function SongPage() {
       {hasAnything(song) ? (
         <section className="card p-4 space-y-3">
           {melody.length > 0 && <Staff clef="treble" notes={melody} labels />}
-          <button className="btn-primary w-full flex items-center justify-center gap-2" onClick={() => play()} disabled={playing}>
+          <button className="btn-primary w-full flex items-center justify-center gap-2" onClick={() => play(song, 2, muted)} disabled={playing}>
             <Play size={18} /> {playing ? t('playing') : t('listenSong')}
           </button>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted font-semibold">{t('layers')}</p>
+            <p className="text-xs text-muted">{t('layersHint')}</p>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-2">
+              {BAND.map((m) => {
+                const inBand = isInBand(m, completed)
+                const on = inBand && withParts.has(m.id) && !muted.has(m.id)
+                const color = CHARACTERS[m.id].color
+                return (
+                  <button
+                    key={m.id}
+                    disabled={!inBand || !withParts.has(m.id)}
+                    onClick={() => toggle(m.id)}
+                    className="rounded-card border-2 p-1.5 flex flex-col items-center gap-0.5 transition disabled:opacity-50"
+                    style={{ borderColor: on ? color : 'rgb(var(--line))', background: on ? `color-mix(in srgb, ${color} 12%, transparent)` : undefined, color: 'rgb(var(--muted))' }}
+                    aria-pressed={on}
+                  >
+                    <Character id={m.id} size={44} silhouette={!inBand} playing={on && playing} />
+                    <span className="text-[11px] font-semibold text-ink">{m.id === 'mo' ? 'Mo' : tl(CHARACTERS[m.id].species)}</span>
+                    <span className="text-[10px] text-muted">
+                      {!inBand ? `${t('unit')} ${unitNumber(m.joinsUnit!)}` : muted.has(m.id) ? t('muted') : ''}
+                    </span>
+                    <span className="h-1 w-8 rounded-full" style={{ background: on ? color : 'transparent' }} />
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </section>
       ) : (
         <p className="card p-5 text-center text-muted">{t('songEmpty')}</p>

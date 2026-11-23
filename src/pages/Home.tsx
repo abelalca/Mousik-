@@ -7,6 +7,8 @@ import { todayXp, useStore } from '@/store/useStore'
 import { Mascot } from '@/components/Mascot'
 import { Check, Lock, Star } from '@/components/Icons'
 import { useRich } from '@/components/RichText'
+import { Character } from '@/components/characters'
+import { unitPresenter, unitReached } from '@/content/band'
 
 const OFFSETS = [0, 52, 78, 52, 0, -52, -78, -52]
 
@@ -54,7 +56,11 @@ export default function Home() {
           <section key={unit.id}>
             <div className="hero-bg rounded-card p-5 text-white shadow-lift">
               <div className="flex items-center justify-between gap-3">
-                <div>
+                {/* the musician who teaches this unit (a silhouette until you get there) */}
+                <div className="shrink-0 rounded-card bg-white/15 p-1" style={{ color: 'rgb(255 255 255 / .45)' }}>
+                  <Character id={unitPresenter(unit.id)} size={60} silhouette={!unitReached(unit.id, completed)} />
+                </div>
+                <div className="flex-1 min-w-0">
                   <p className="text-[11px] uppercase tracking-[.18em] opacity-80 font-semibold">
                     {t('unit')} {ui + 1} · {tl(unit.level)}
                   </p>

@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useT } from '@/lib/i18n'
-import { Home, Note, User } from './Icons'
+import { Band, Home, Note, User } from './Icons'
 import { Stats } from './Stats'
 
 function Logo() {
@@ -31,6 +31,9 @@ export function Layout() {
           <NavLink to="/song" className={link}>
             <Note /> {t('mySong')}
           </NavLink>
+          <NavLink to="/band" className={link}>
+            <Band /> {t('band')}
+          </NavLink>
           <NavLink to="/profile" className={link}>
             <User /> {t('profile')}
           </NavLink>
@@ -55,6 +58,9 @@ export function Layout() {
         </NavLink>
         <NavLink to="/song" className={mlink}>
           <Note size={22} /> {t('mySong')}
+        </NavLink>
+        <NavLink to="/band" className={mlink}>
+          <Band size={22} /> {t('band')}
         </NavLink>
         <NavLink to="/profile" className={mlink}>
           <User size={22} /> {t('profile')}

@@ -147,6 +147,26 @@ const ui = {
   regHigh: { en: 'High', es: 'Agudo' },
   unitSongTitle: { en: 'Unit complete! Mo plays your song', es: '¡Unidad completada! Mo toca tu canción' },
   songNextUnit: { en: 'Next, in Unit 2, you will give your song a rhythm.', es: 'En la Unidad 2 le darás ritmo a tu canción.' },
+  // band
+  band: { en: 'Band', es: 'Banda' },
+  myBand: { en: "Mo's band", es: 'La banda de Mo' },
+  bandIntro: {
+    en: 'Each musician teaches a unit. Finish it and they join your band and play your song.',
+    es: 'Cada músico enseña una unidad. Termínala y se unirá a tu banda para tocar tu canción.',
+  },
+  joinsInUnit: { en: 'Joins after Unit', es: 'Se une al terminar la Unidad' },
+  inYourBand: { en: 'In your band', es: 'En tu banda' },
+  playsIn: { en: 'Plays', es: 'Toca' },
+  addsToSong: { en: 'Adds to your song', es: 'Añade a tu canción' },
+  presents: { en: 'Teaches', es: 'Enseña' },
+  playWithBand: { en: 'Play with the band', es: 'Tocar con la banda' },
+  layers: { en: 'Layers', es: 'Capas' },
+  layersHint: { en: 'Tap a musician to mute or unmute their part.', es: 'Toca a un músico para silenciar o activar su parte.' },
+  muted: { en: 'Muted', es: 'Silenciado' },
+  joinsBand: { en: 'joins your band!', es: '¡se une a tu banda!' },
+  joinsBandBody: { en: 'From now on they play their part in your song.', es: 'A partir de ahora toca su parte en tu canción.' },
+  meetBand: { en: 'See the band', es: 'Ver la banda' },
+  stageSilence: { en: 'Create the first piece of your song so the band has something to play.', es: 'Crea la primera pieza de tu canción para que la banda tenga algo que tocar.' },
 } satisfies Record<string, L>
 
 export type UiKey = keyof typeof ui

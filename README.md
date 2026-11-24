@@ -9,6 +9,7 @@ App web (y móvil, instalable como PWA) estilo Duolingo para aprender **teoría 
 - **Género a elegir** (clásica, pop, rock): cambia el tema visual, el atuendo de la mascota, los consejos de cada lección y, en las unidades avanzadas, los ejercicios y el proyecto final.
 - **Mo**, la mascota: un ratón cuya cola tiene forma de clave de sol 🎼.
 - **Gamificación**: XP, rachas, meta diaria, corazones, mapa de lecciones y repetición de errores al final de cada lección.
+- **Cuenta obligatoria y siempre conectada**: hay que registrarse (y hacer el onboarding) para usar la app. Todo el estado —ajustes, progreso, XP, racha, corazones y canción— vive en Supabase; sin conexión la app no abre (muestra una pantalla de "Sin conexión" con Reintentar).
 - **Instrumentos de cada género**: el piano es el "mapa" para la teoría; en la práctica y los ejercicios suenan los instrumentos del género elegido:
   - Clásica: violín, violonchelo, contrabajo, flauta, clarinete, fagot, trompeta, trompa, arpa.
   - Pop: piano eléctrico, sintetizador solista, pad, guitarra acústica, bajo eléctrico, batería.
@@ -17,12 +18,16 @@ App web (y móvil, instalable como PWA) estilo Duolingo para aprender **teoría 
 
 ## Puesta en marcha
 
+La app necesita un backend de Supabase (no hay modo invitado). En local (requiere Docker):
+
 ```bash
 npm install
-npm run dev             # http://localhost:5173 (modo invitado, sin backend)
+npx supabase start          # imprime la URL y la anon key
+cp .env.example .env.local  # pega la anon key
+npm run dev                 # http://localhost:5173
 ```
 
-Con backend local (requiere Docker): `npx supabase start`, copia `.env.example` a `.env.local` con la clave que imprime, y `npm run dev`.
+Sin backend configurado, la app muestra "Mousik no está disponible". La compilación estática de vista previa (`npm run build:preview`) también muestra esa pantalla salvo que se le dé un backend.
 
 Ambientes (DEV/QA/PROD), ciclo de desarrollo, CI/CD, seguridad y configuración de cuentas: **[docs/DEVOPS.md](docs/DEVOPS.md)**.
 
@@ -49,10 +54,10 @@ src/content/              Contenido de las lecciones (bilingüe)
 src/exercises/build.ts    Convierte un ejercicio en una pregunta (opciones barajadas, distractores)
 src/components/           Mascota, Piano, Pentagrama (VexFlow), iconos…
 src/pages/                Bienvenida, Login, Onboarding, Mapa (Home), Lección, Perfil
-src/lib/                  Audio multi-instrumento (Tone.js), catálogo de instrumentos, teoría, i18n, auth, sync
+src/lib/                  Audio multi-instrumento (Tone.js), catálogo de instrumentos, teoría, i18n, auth, sync, conectividad
 public/samples/           Muestras de instrumentos + manifest.json + CREDITS.md
-src/store/useStore.ts     Estado (ajustes, XP, racha, corazones, progreso)
-supabase/migrations/      Esquema de la base de datos (RLS, funciones de progreso validadas)
+src/store/useStore.ts     Caché en memoria del estado del alumno (se carga de Supabase; nada se guarda en el dispositivo)
+supabase/migrations/      Esquema de la base de datos (RLS, funciones de progreso y corazones validadas)
 supabase/tests/           Tests de seguridad pgTAP
 .github/workflows/        CI (PR), Deploy (DEV/QA/PROD), backup nocturno
 ```

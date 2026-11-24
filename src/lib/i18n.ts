@@ -21,20 +21,11 @@ const ui = {
     en: 'This permanently deletes your account, your progress and all your data. It cannot be undone.',
     es: 'Esto elimina para siempre tu cuenta, tu progreso y todos tus datos. No se puede deshacer.',
   },
-  deleteAccountLocal: {
-    en: 'This deletes all the progress saved on this device. It cannot be undone.',
-    es: 'Esto borra todo el progreso guardado en este dispositivo. No se puede deshacer.',
-  },
   deleteConfirm: { en: 'Yes, delete everything', es: 'Sí, eliminar todo' },
   cancel: { en: 'Cancel', es: 'Cancelar' },
   noAccount: { en: "Don't have an account?", es: '¿No tienes cuenta?' },
   yesAccount: { en: 'Already have an account?', es: '¿Ya tienes cuenta?' },
   checkEmail: { en: 'Check your inbox to confirm your email, then sign in.', es: 'Revisa tu correo para confirmar tu cuenta y luego inicia sesión.' },
-  localMode: {
-    en: 'Cloud accounts are not configured yet — your progress will be saved on this device.',
-    es: 'Las cuentas en la nube aún no están configuradas: tu progreso se guardará en este dispositivo.',
-  },
-  continueLocal: { en: 'Continue on this device', es: 'Continuar en este dispositivo' },
   // onboarding
   obLangTitle: { en: 'Which language do you prefer?', es: '¿En qué idioma prefieres aprender?' },
   obNameTitle: { en: 'What should Mo call you?', es: '¿Cómo quieres que Mo te llame?' },
@@ -114,7 +105,6 @@ const ui = {
   sound: { en: 'Sound', es: 'Sonido' },
   account: { en: 'Account', es: 'Cuenta' },
   signOut: { en: 'Sign out', es: 'Cerrar sesión' },
-  localAccount: { en: 'Saved on this device', es: 'Guardado en este dispositivo' },
   on: { en: 'On', es: 'Activado' },
   off: { en: 'Off', es: 'Desactivado' },
   name: { en: 'Name', es: 'Nombre' },
@@ -168,6 +158,29 @@ const ui = {
   joinsBandBody: { en: 'From now on they play their part in your song.', es: 'A partir de ahora toca su parte en tu canción.' },
   meetBand: { en: 'See the band', es: 'Ver la banda' },
   stageSilence: { en: 'Create the first piece of your song so the band has something to play.', es: 'Crea la primera pieza de tu canción para que la banda tenga algo que tocar.' },
+  // connection and server errors
+  offlineTitle: { en: 'No connection', es: 'Sin conexión' },
+  offlineBody: {
+    en: 'Mousik needs the internet to save your progress. Check your connection and try again.',
+    es: 'Mousik necesita internet para guardar tu progreso. Revisa tu conexión e inténtalo de nuevo.',
+  },
+  retry: { en: 'Try again', es: 'Reintentar' },
+  checking: { en: 'Connecting…', es: 'Conectando…' },
+  unavailableTitle: { en: 'Mousik is not available', es: 'Mousik no está disponible' },
+  unavailableBody: {
+    en: 'This version of the app is not connected to a server yet. Please try again later.',
+    es: 'Esta versión de la app aún no está conectada a un servidor. Vuelve a intentarlo más tarde.',
+  },
+  loadingLesson: { en: 'Getting your lesson ready…', es: 'Preparando tu lección…' },
+  lessonError: { en: 'This lesson could not be started', es: 'No se pudo empezar la lección' },
+  saving: { en: 'Saving your result…', es: 'Guardando tu resultado…' },
+  saveFailed: { en: 'Your result could not be saved', es: 'No se pudo guardar tu resultado' },
+  errLocked: { en: 'Finish the previous lessons first.', es: 'Primero termina las lecciones anteriores.' },
+  errRateLimited: { en: 'You have started many lessons in a short time. Take a break and try again later.', es: 'Has empezado muchas lecciones en poco tiempo. Descansa un poco y vuelve a intentarlo.' },
+  errTooFast: { en: 'That was faster than humanly possible, so this lesson did not count.', es: 'Fue más rápido de lo humanamente posible, así que esta lección no contó.' },
+  errExpired: { en: 'This attempt expired. Start the lesson again.', es: 'Este intento caducó. Empieza la lección de nuevo.' },
+  errNetwork: { en: 'Could not reach the server. Check your connection and try again.', es: 'No se pudo contactar con el servidor. Revisa tu conexión e inténtalo de nuevo.' },
+  errGeneric: { en: 'Something went wrong. Please try again.', es: 'Algo salió mal. Inténtalo de nuevo.' },
 } satisfies Record<string, L>
 
 export type UiKey = keyof typeof ui

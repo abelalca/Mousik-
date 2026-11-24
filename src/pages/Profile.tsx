@@ -39,7 +39,7 @@ export default function Profile() {
         <Mascot mood="happy" size={90} />
         <div className="min-w-0">
           <h1 className="text-3xl font-bold truncate">{settings.displayName || 'Mousik'}</h1>
-          <p className="text-sm text-muted truncate">{user?.local ? t('localAccount') : user?.email}</p>
+          <p className="text-sm text-muted truncate">{user?.email}</p>
         </div>
       </section>
 
@@ -107,7 +107,7 @@ export default function Profile() {
         ) : (
           <div className="space-y-3">
             <p className="font-semibold">{t('deleteAccount')}</p>
-            <p className="text-sm text-muted">{user?.local ? t('deleteAccountLocal') : t('deleteAccountBody')}</p>
+            <p className="text-sm text-muted">{t('deleteAccountBody')}</p>
             {deleteError && <p className="text-sm text-danger">{deleteError}</p>}
             <div className="flex flex-wrap gap-2">
               <button

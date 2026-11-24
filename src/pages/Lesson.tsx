@@ -8,7 +8,8 @@ import { buildQuestion, type Clip, type Question } from '@/exercises/build'
 import { useT } from '@/lib/i18n'
 import { useStore, liveStreak } from '@/store/useStore'
 import { playClips, playFeedback, preload } from '@/lib/audio'
-import { startAttempt, submitCompletion } from '@/lib/progressApi'
+import { completeAttempt, loseHeart, startAttempt } from '@/lib/progressApi'
+import type { UiKey } from '@/lib/i18n'
 import { InstrumentChip } from '@/components/InstrumentCards'
 import { allLessons } from '@/content/course'
 import { midi } from '@/lib/music'
@@ -37,8 +38,6 @@ export default function LessonPage() {
   const { t, tl, locale } = useT()
   const { notation, genre } = useStore((s) => s.settings)
   const progress = useStore((s) => s.progress)
-  const loseHeart = useStore((s) => s.loseHeart)
-  const completeLesson = useStore((s) => s.completeLesson)
   const setSongSlot = useStore((s) => s.setSongSlot)
   // Was this lesson's unit already finished before? (to celebrate only the first time)
   const [unitWasDone] = useState(() => !!lesson && !!unitOf(lesson.id)?.lessons.every((l) => progress.completed[l.id]))
@@ -60,12 +59,23 @@ export default function LessonPage() {
   const [confirmQuit, setConfirmQuit] = useState(false)
   const [result, setResult] = useState<{ xp: number; accuracy: number } | null>(null)
 
-  // Ask the server for an attempt id (it validates unlock order); results are sent with it.
-  const attemptId = useRef<Promise<string | null> | null>(null)
+  // The server must open an attempt (it checks unlock order and the rate limit) before the lesson starts.
+  const [attempt, setAttempt] = useState<{ status: 'pending' } | { status: 'ok'; id: string } | { status: 'error'; code: string }>({ status: 'pending' })
+  const started = useRef(false)
+  const begin = () => {
+    if (!lesson) return
+    setAttempt({ status: 'pending' })
+    startAttempt(lesson.id).then((r) => setAttempt(r.ok ? { status: 'ok', id: r.data } : { status: 'error', code: r.code }))
+  }
   useEffect(() => {
-    if (lesson && !attemptId.current) attemptId.current = startAttempt(lesson.id)
+    if (started.current) return // StrictMode runs effects twice in development
+    started.current = true
+    begin()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  // The result only counts once the server confirms it.
+  const [submit, setSubmit] = useState<{ status: 'idle' | 'sending' | 'ok' } | { status: 'error'; code: string }>({ status: 'idle' })
+  const score = useRef({ correct: 0, total: 0 })
 
   // Download every instrument this lesson will use while the learner reads the theory.
   useEffect(() => {
@@ -143,15 +153,19 @@ export default function LessonPage() {
     else setPos(pos + 1)
   }
 
+  async function send() {
+    if (attempt.status !== 'ok') return
+    setSubmit({ status: 'sending' })
+    const r = await completeAttempt(lesson!.id, attempt.id, score.current.correct, score.current.total)
+    if (r.ok) {
+      setResult({ xp: r.data.xp, accuracy: r.data.accuracy })
+      setSubmit({ status: 'ok' })
+    } else setSubmit({ status: 'error', code: r.code })
+  }
+
   function finish() {
-    const accuracy = Math.round(((total - firstTryWrong.size) / total) * 100)
-    const xp = 10 + (firstTryWrong.size === 0 ? 5 : 0)
-    completeLesson(lesson!.id, xp, accuracy)
-    // Official XP/streak come back from the server (queued if offline).
-    attemptId.current?.then((id) => {
-      if (id) submitCompletion(id, lesson!.id, total - firstTryWrong.size, total)
-    })
-    setResult({ xp, accuracy })
+    score.current = { correct: total - firstTryWrong.size, total }
+    send()
     // Then the creative step: add a piece to the learner's song (not graded).
     setPhase(lesson!.create ? 'create' : 'done')
   }
@@ -185,6 +199,18 @@ export default function LessonPage() {
   }
 
   // ---------- RESULT ----------
+  if (phase === 'done' && submit.status !== 'ok') {
+    if (submit.status === 'error')
+      return (
+        <ErrorScreen
+          title={t('saveFailed')}
+          body={t(errorKey(submit.code))}
+          onRetry={submit.code === 'network' ? send : undefined}
+          onBack={() => nav('/')}
+        />
+      )
+    return <WaitScreen text={t('saving')} />
+  }
   if (phase === 'done' && result) {
     const perfect = mistakes === 0
     return (
@@ -226,6 +252,11 @@ export default function LessonPage() {
       </>
     )
   }
+
+  // ---------- waiting for the server to open the attempt ----------
+  if (attempt.status === 'pending') return <WaitScreen text={t('loadingLesson')} />
+  if (attempt.status === 'error')
+    return <ErrorScreen title={t('lessonError')} body={t(errorKey(attempt.code))} onRetry={attempt.code === 'network' ? begin : undefined} onBack={() => nav('/')} />
 
   return (
     <div className="min-h-full flex flex-col max-w-2xl mx-auto">
@@ -461,6 +492,56 @@ function QuestionView({
           <Piano from={q.range[0]} to={q.range[1]} labels={q.labels ? true : false} marks={marks} onPress={onKey} disabled={status !== 'idle'} instrument={q.instrument} />
         </div>
       )}
+    </div>
+  )
+}
+
+/** Message for a server error code (see the SQL functions' `raise exception` codes). */
+function errorKey(code: string): UiKey {
+  switch (code) {
+    case 'lesson_locked':
+      return 'errLocked'
+    case 'rate_limited':
+      return 'errRateLimited'
+    case 'too_fast':
+      return 'errTooFast'
+    case 'attempt_expired':
+      return 'errExpired'
+    case 'network':
+      return 'errNetwork'
+    default:
+      return 'errGeneric'
+  }
+}
+
+function WaitScreen({ text }: { text: string }) {
+  return (
+    <div className="h-full grid place-items-center px-6">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <Mascot mood="think" size={110} />
+        <p className="text-muted font-semibold">{text}</p>
+      </div>
+    </div>
+  )
+}
+
+function ErrorScreen({ title, body, onRetry, onBack }: { title: string; body: string; onRetry?: () => void; onBack: () => void }) {
+  const { t } = useT()
+  return (
+    <div className="min-h-full flex flex-col items-center justify-center px-6 py-10 text-center gap-4 max-w-md mx-auto">
+      <Mascot mood="sad" size={130} />
+      <h1 className="text-3xl font-bold">{title}</h1>
+      <p className="text-muted">{body}</p>
+      <div className="flex flex-col gap-2 w-full mt-2">
+        {onRetry && (
+          <button className="btn-primary w-full" onClick={onRetry}>
+            {t('retry')}
+          </button>
+        )}
+        <button className={onRetry ? 'btn-ghost w-full' : 'btn-primary w-full'} onClick={onBack}>
+          {t('backHome')}
+        </button>
+      </div>
     </div>
   )
 }

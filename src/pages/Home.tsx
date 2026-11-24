@@ -1,6 +1,6 @@
 import { course } from '@/content/course'
 import { useT } from '@/lib/i18n'
-import { todayXp, useStore } from '@/store/useStore'
+import { useStore } from '@/store/useStore'
 import { Mascot } from '@/components/Mascot'
 import { UnitStaff } from '@/components/StaffMap'
 
@@ -9,7 +9,7 @@ export default function Home() {
   const { completed } = useStore((s) => s.progress)
   const progress = useStore((s) => s.progress)
   const { displayName, dailyGoal } = useStore((s) => s.settings)
-  const today = todayXp(progress)
+  const today = progress.todayXp
   const currentId = course.flatMap((u) => u.lessons).find((l) => !completed[l.id])?.id
 
   return (

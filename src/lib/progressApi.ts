@@ -1,69 +1,76 @@
 import { supabase } from './supabase'
-import { useAuth } from './auth'
-import { useStore, type PendingCompletion } from '@/store/useStore'
+import { useConnection } from './connectivity'
+import { refreshProgress, timezone } from './sync'
+import { MAX_HEARTS, useStore, type CompletionResult } from '@/store/useStore'
 
 /**
- * Server-authoritative progress.
- * - startAttempt() asks the server for an attempt id (it checks sign-in, unlock order, rate limit).
- * - submitCompletion() sends the result; the server validates it and returns the official XP/streak.
- * Results are queued locally and retried while offline (the server accepts them for 7 days).
+ * Server-authoritative progress (no offline queue: the app only runs online).
+ * - startAttempt(): the server checks sign-in, unlock order and the rate limit and returns an attempt id.
+ *   A lesson can only be played once it has one.
+ * - completeAttempt(): the server validates the result and returns the official XP/streak.
+ * - loseHeart(): hearts live on the server; the local value is updated optimistically.
  */
 
-const cloudUser = () => {
-  const u = useAuth.getState().user
-  return supabase && u && !u.local ? u : null
+export type ApiResult<T> = { ok: true; data: T } | { ok: false; code: string }
+
+interface RpcError {
+  code?: string
+  message?: string
 }
 
-/** Business errors (SQLSTATE P0001) are final; anything else (network) is retried later. */
-const isFinal = (error: { code?: string } | null) => error?.code === 'P0001'
-
-export async function startAttempt(lessonId: string): Promise<string | null> {
-  if (!cloudUser()) return null
-  const { data, error } = await supabase!.rpc('start_lesson', { p_lesson_id: lessonId })
-  if (error) {
-    // Offline or locked on the server: the lesson can still be played, it just won't count online.
-    console.warn('start_lesson:', error.message)
-    return null
-  }
-  return data as string
+/** Business errors (SQLSTATE P0001) carry a stable code; anything else is treated as a connection problem. */
+function failure(error: RpcError | null): { ok: false; code: string } {
+  if (error?.code === 'P0001' && error.message) return { ok: false, code: error.message }
+  useConnection.getState().reportFailure()
+  return { ok: false, code: 'network' }
 }
 
-async function send(p: PendingCompletion): Promise<boolean> {
-  const { data, error } = await supabase!.rpc('complete_lesson', {
-    p_attempt_id: p.attemptId,
-    p_correct: p.correct,
-    p_total: p.total,
-    p_timezone: p.timezone,
+export async function startAttempt(lessonId: string): Promise<ApiResult<string>> {
+  if (!supabase) return { ok: false, code: 'network' }
+  const { data, error } = await supabase.rpc('start_lesson', { p_lesson_id: lessonId })
+  if (error || !data) return failure(error)
+  return { ok: true, data: data as string }
+}
+
+export async function completeAttempt(lessonId: string, attemptId: string, correct: number, total: number): Promise<ApiResult<CompletionResult>> {
+  if (!supabase) return { ok: false, code: 'network' }
+  const { data, error } = await supabase.rpc('complete_lesson', {
+    p_attempt_id: attemptId,
+    p_correct: correct,
+    p_total: total,
+    p_timezone: timezone(),
   })
   if (!error && data) {
-    useStore.getState().applyServerProgress(data)
-    return true
+    const r = data as CompletionResult
+    useStore.getState().applyCompletion(lessonId, r)
+    return { ok: true, data: r }
   }
-  if (isFinal(error)) {
-    console.warn('complete_lesson rejected:', error?.message)
-    return true // drop it: retrying would fail the same way
-  }
-  return false
-}
-
-export async function submitCompletion(attemptId: string, lessonId: string, correct: number, total: number) {
-  if (!cloudUser()) return
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-  const p: PendingCompletion = { attemptId, lessonId, correct, total, timezone }
-  useStore.getState().addPending(p)
-  if (await send(p)) useStore.getState().removePending(attemptId)
-}
-
-let flushing = false
-export async function flushPending() {
-  if (!cloudUser() || flushing) return
-  flushing = true
-  try {
-    for (const p of useStore.getState().pendingCompletions) {
-      if (!(await send(p))) break // still offline
-      useStore.getState().removePending(p.attemptId)
+  const f = failure(error)
+  // A retry after a lost response: the first submission was saved, so read its result back.
+  if (f.code === 'attempt_already_completed') {
+    try {
+      const { data: ev, error: evErr } = await supabase.from('xp_events').select('xp, accuracy').eq('attempt_id', attemptId).single()
+      if (evErr) throw evErr
+      await refreshProgress()
+      const p = useStore.getState().progress
+      return { ok: true, data: { xp: ev.xp, accuracy: ev.accuracy, total_xp: p.xp, streak: p.streak, last_active_date: p.lastActiveDate ?? '' } }
+    } catch (e) {
+      return failure(e as RpcError)
     }
-  } finally {
-    flushing = false
   }
+  return f
+}
+
+export async function loseHeart() {
+  const s = useStore.getState()
+  const { hearts, heartsUpdatedAt } = s.progress
+  if (hearts > 0) s.setHearts(hearts - 1, hearts === MAX_HEARTS ? Date.now() : heartsUpdatedAt)
+  if (!supabase) return
+  const { data, error } = await supabase.rpc('lose_heart')
+  if (error || !data) {
+    failure(error)
+    return
+  }
+  const r = data as { hearts: number; hearts_updated_at: string }
+  useStore.getState().setHearts(r.hearts, new Date(r.hearts_updated_at).getTime())
 }

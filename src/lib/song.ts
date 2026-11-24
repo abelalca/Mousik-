@@ -19,7 +19,7 @@ export interface Song {
   motif: (string | null)[]
   /** Low note Mo holds under the melody (left hand). */
   bass?: string
-  /** ms timestamp of the last change (used to pick the newest copy between devices). */
+  /** ms timestamp of the last change (informational; the server copy is the source of truth). */
   updatedAt: number
 }
 

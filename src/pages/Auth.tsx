@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
-import { cloudEnabled } from '@/lib/supabase'
 import { getConfig } from '@/lib/config'
 import { useT } from '@/lib/i18n'
 import { Mascot } from '@/components/Mascot'
@@ -11,7 +10,7 @@ export default function Auth() {
   const { t } = useT()
   const [params, setParams] = useSearchParams()
   const mode = params.get('mode') === 'signin' ? 'signin' : 'signup'
-  const { signIn, signUp, signInWithProvider, continueLocally } = useAuth()
+  const { signIn, signUp, signInWithProvider } = useAuth()
   const providers = getConfig().authProviders
   // Same policy as the server (supabase/config.toml): 8+ chars, upper, lower and a digit.
   const strongPassword = (p: string) => p.length >= 8 && /[a-z]/.test(p) && /[A-Z]/.test(p) && /\d/.test(p)
@@ -52,15 +51,7 @@ export default function Auth() {
         <Mascot mood="happy" size={110} />
         <h1 className="text-3xl font-bold mt-3 mb-6">{mode === 'signin' ? t('signIn') : t('signUp')}</h1>
 
-        {!cloudEnabled ? (
-          <div className="w-full space-y-4 text-center">
-            <p className="text-sm text-muted card p-4 shadow-none">{t('localMode')}</p>
-            <button className="btn-primary w-full" onClick={continueLocally}>
-              {t('continueLocal')}
-            </button>
-          </div>
-        ) : (
-          <div className="w-full space-y-4">
+        <div className="w-full space-y-4">
             {providers.includes('apple') && (
               <button className="btn-ghost w-full" onClick={() => signInWithProvider('apple')}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -119,8 +110,7 @@ export default function Auth() {
                 {mode === 'signin' ? t('signUp') : t('signIn')}
               </button>
             </p>
-          </div>
-        )}
+        </div>
       </main>
     </div>
   )

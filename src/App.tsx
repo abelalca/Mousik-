@@ -1,13 +1,16 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 // In-memory routing when hosted as a static preview inside a sandboxed frame.
 const Router = import.meta.env.VITE_ROUTER === 'memory' ? MemoryRouter : BrowserRouter
 import { useAuth } from '@/lib/auth'
-import { useCloudSync } from '@/lib/sync'
+import { useServerState } from '@/lib/sync'
+import { backendConfigured } from '@/lib/supabase'
+import { useConnection } from '@/lib/connectivity'
 import { useStore } from '@/store/useStore'
 import { Layout } from '@/components/Layout'
 import { Mascot } from '@/components/Mascot'
+import { NotConfigured, Offline, Splash } from '@/components/Gate'
 import Welcome from '@/pages/Welcome'
 import Auth from '@/pages/Auth'
 import Onboarding from '@/pages/Onboarding'
@@ -25,10 +28,17 @@ const ConcertPreview = import.meta.env.DEV ? lazy(() => import('@/components/Con
 export default function App() {
   const { user, ready, init } = useAuth()
   const onboarded = useStore((s) => s.onboarded)
+  const loaded = useStore((s) => s.loaded)
   const { genre, locale } = useStore((s) => s.settings)
+  const online = useConnection((s) => s.online)
+  const [booted, setBooted] = useState(false)
 
   useEffect(init, [init])
-  useCloudSync()
+  const { failed } = useServerState()
+  // The app opens only after the backend has answered once; later drops show an overlay.
+  useEffect(() => {
+    if (online) setBooted(true)
+  }, [online])
 
   // Theme + language live on <html>.
   useEffect(() => {
@@ -38,14 +48,16 @@ export default function App() {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', `rgb(${bg})`)
   }, [genre, locale])
 
-  if (!ready)
-    return (
-      <div className="h-full grid place-items-center">
-        <Mascot size={90} />
-      </div>
-    )
+  // Online-only: without a backend, or before it has been reached, the app does not open.
+  if (!backendConfigured) return <NotConfigured />
+  if (!booted) return online === false ? <Offline /> : <Splash />
+  if (!ready) return <Splash />
+  // Signed in: wait for the learner's data before choosing onboarding or the map.
+  if (user && !loaded) return failed ? <Offline /> : <Splash />
 
   return (
+    <>
+    {online === false && <Offline overlay />}
     <Router>
       <Routes>
         {BandPreview && <Route path="/dev/band" element={<Suspense fallback={null}><BandPreview /></Suspense>} />}
@@ -72,5 +84,6 @@ export default function App() {
         )}
       </Routes>
     </Router>
+    </>
   )
 }
